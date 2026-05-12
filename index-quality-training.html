@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index Quality Training</title>
+
+  <style>
+    html, body {
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: #141B26;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    #stats {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    #average {
+      font-size: 70px;
+      font-weight: bold;
+      margin: 30px;
+    }
+
+    input {
+      font-size: 24px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: black;
+      transition: opacity 120ms ease;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      font-size: 16px;
+      border-radius: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      margin: 6px;
+      cursor: pointer;
+      background: white;
+      color: black;
+    }
+
+    #submitButton {
+      font-size: 24px;
+      padding: 12px;
+    }
+
+    #result {
+      font-size: 28px;
+      margin-top: 30px;
+      min-height: 40px;
+    }
+
+    #scale {
+      display: none;
+      text-align: left;
+      font-size: 22px;
+      line-height: 1.6;
+      margin-top: 36px;
+      margin-bottom: 28px;
+    }
+
+    #answerFormat {
+      text-align: left;
+      font-size: 22px;
+      line-height: 1.45;
+      margin-top: 36px;
+      margin-bottom: 28px;
+    }
+
+    #popupOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #1f2a38;
+      color: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      z-index: 10;
+      width: 300px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .popup button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    .popup-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .popup-note {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .popup-message {
+      font-size: 18px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      min-height: 20px;
+    }
+
+    .data-note {
+      font-size: 16px;
+      line-height: 1.35;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+
+<body>
+<h1>Index Quality Training</h1>
+
+<div id="stats">
+  Played: 0 | Correct: 0 | Wrong: 0<br>
+  Accuracy: 0%<br>
+  Streak: 0 | Last Streak: 0 | Best Streak: 0
+</div>
+
+<div id="average"></div>
+
+<input id="answer" placeholder="Your answer">
+
+<br><br>
+
+<button id="submitButton" onmousedown="event.preventDefault()" ontouchend="event.preventDefault(); checkAnswer()" onclick="checkAnswer()">Submit</button>
+
+<div id="result"></div>
+
+<div>
+  <button id="scaleButton" onclick="toggleScale()">Show Scale</button>
+  <button onclick="openResetPopup()">Reset</button>
+</div>
+
+<div>
+  <button onclick="openThemePopup()">Theme</button>
+  <button onclick="openDataPopup()">Data</button>
+</div>
+
+<div id="scale">
+  <b>Scale Reference</b><br><br>
+
+  <b><span style="color:#f44336;">■</span> Very Poor:</b><br>
+  1.00–1.24 = <span style="color:#f44336;">■</span> Very Poor I (11)<br>
+  1.25–1.49 = <span style="color:#f44336;">■</span> Very Poor II (12)<br><br>
+
+  <b><span style="color:#ff9800;">■</span> Poor:</b><br>
+  1.50–1.74 = <span style="color:#ff9800;">■</span> Poor I (21)<br>
+  1.75–1.99 = <span style="color:#ff9800;">■</span> Poor II (22)<br>
+  2.00–2.24 = <span style="color:#ff9800;">■</span> Poor III (23)<br>
+  2.25–2.49 = <span style="color:#ff9800;">■</span> Poor IV (24)<br><br>
+
+  <b><span style="color:#ffcc33;">■</span> Mixed:</b><br>
+  2.50–2.74 = <span style="color:#ffcc33;">■</span> Mixed I (31)<br>
+  2.75–2.99 = <span style="color:#ffcc33;">■</span> Mixed II (32)<br>
+  3.00–3.24 = <span style="color:#ffcc33;">■</span> Mixed III (33)<br>
+  3.25–3.49 = <span style="color:#ffcc33;">■</span> Mixed IV (34)<br><br>
+
+  <b><span style="color:#8bc34a;">■</span> Good:</b><br>
+  3.50–3.74 = <span style="color:#8bc34a;">■</span> Good I (41)<br>
+  3.75–3.99 = <span style="color:#8bc34a;">■</span> Good II (42)<br>
+  4.00–4.24 = <span style="color:#8bc34a;">■</span> Good III (43)<br>
+  4.25–4.49 = <span style="color:#8bc34a;">■</span> Good IV (44)<br><br>
+
+  <b><span style="color:#2196f3;">■</span> Excellent:</b><br>
+  4.50–4.74 = <span style="color:#2196f3;">■</span> Excellent I (51)<br>
+  4.75–5.00 = <span style="color:#2196f3;">■</span> Excellent II (52)
+</div>
+
+<div id="answerFormat">
+  <b>Answer format</b><br><br>
+  Examples of approved formats:<br><br>
+  43<br>
+  Good III<br>
+  Good 3<br><br>
+  Spaces and capitalization do not matter.
+</div>
+
+<div id="popupOverlay" onclick="closeAllPopups()"></div>
+
+<div id="themePopup" class="popup">
+  <div class="popup-title">Choose theme</div>
+  <button onclick="setTheme('classic')">Classic</button>
+  <button onclick="setTheme('dark')">Dark</button>
+  <button onclick="setTheme('light')">Light</button>
+  <button onclick="closeAllPopups()">Cancel</button>
+</div>
+
+<div id="resetPopup" class="popup">
+  <div class="popup-title">Reset?</div>
+  <div class="popup-note">(This will reset your stats.)</div>
+  <button onclick="confirmReset()">Reset</button>
+  <button onclick="closeAllPopups()">Cancel</button>
+</div>
+
+<div id="dataPopup" class="popup">
+  <div class="popup-title">Backup / Restore</div>
+  <div class="data-note">
+    Backup or restore your QT stats.<br><br>
+    Useful when switching browsers or protecting your progress.
+  </div>
+  <button onclick="showBackupCode()">Backup</button>
+  <button onclick="showRestoreBox()">Restore</button>
+  <button onclick="closeAllPopups()">Cancel</button>
+</div>
+
+<div id="backupPopup" class="popup">
+  <div class="popup-title">Backup Code</div>
+  <textarea id="backupCode" readonly></textarea>
+  <button onclick="copyBackupCode()">Copy Code</button>
+  <button onclick="closeAllPopups()">Close</button>
+  <div id="backupMessage" class="popup-message"></div>
+</div>
+
+<div id="restorePopup" class="popup">
+  <div class="popup-title">Restore Code</div>
+
+  <div id="restoreEntry">
+    <textarea id="restoreCode" placeholder="Paste backup code here"></textarea>
+    <button onclick="restoreFromCode()">Restore</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <div id="restoreSuccess" style="display:none;">
+    <div class="popup-message">Restored.</div>
+    <button onclick="closeAllPopups()">Okay</button>
+  </div>
+
+  <div id="restoreMessage" class="popup-message"></div>
+</div>
+
+<script>
+const ranges = [
+  [1.00,1.24,"11","Very Poor I"],
+  [1.25,1.49,"12","Very Poor II"],
+  [1.50,1.74,"21","Poor I"],
+  [1.75,1.99,"22","Poor II"],
+  [2.00,2.24,"23","Poor III"],
+  [2.25,2.49,"24","Poor IV"],
+  [2.50,2.74,"31","Mixed I"],
+  [2.75,2.99,"32","Mixed II"],
+  [3.00,3.24,"33","Mixed III"],
+  [3.25,3.49,"34","Mixed IV"],
+  [3.50,3.74,"41","Good I"],
+  [3.75,3.99,"42","Good II"],
+  [4.00,4.24,"43","Good III"],
+  [4.25,4.49,"44","Good IV"],
+  [4.50,4.74,"51","Excellent I"],
+  [4.75,5.00,"52","Excellent II"]
+];
+
+const categoryWords = {
+  "verypoor": "1",
+  "poor": "2",
+  "mixed": "3",
+  "good": "4",
+  "excellent": "5"
+};
+
+const tierWords = {
+  "i": "1",
+  "ii": "2",
+  "iii": "3",
+  "iv": "4",
+  "1": "1",
+  "2": "2",
+  "3": "3",
+  "4": "4"
+};
+
+const validAnswers = [];
+
+for (const range of ranges) {
+  validAnswers.push(range[2]);
+  validAnswers.push(range[3].toLowerCase().replace(/\s/g,""));
+
+  const labelParts = range[3].toLowerCase().split(" ");
+  const tierRoman = labelParts[labelParts.length - 1];
+  const categoryLabel = labelParts.slice(0, -1).join("");
+
+  if (categoryWords[categoryLabel] && tierWords[tierRoman]) {
+    validAnswers.push(categoryWords[categoryLabel] + tierWords[tierRoman]);
+  }
+}
+
+let currentAverage;
+let currentCorrect;
+let tierBag = [];
+
+let played = 0;
+let correct = 0;
+let wrong = 0;
+let streak = 0;
+let lastStreak = 0;
+let bestStreak = 0;
+let answerLocked = false;
+let currentTheme = normalizeTheme(localStorage.getItem("qtTheme") || "classic");
+
+function normalizeTheme(theme) {
+  if (theme === "default") {
+    return "classic";
+  }
+
+  if (theme === "dark" || theme === "light" || theme === "classic") {
+    return theme;
+  }
+
+  return "classic";
+}
+
+function getRangeByCode(code) {
+  return ranges.find(range => range[2] === code);
+}
+
+function getThemeCode(theme) {
+  theme = normalizeTheme(theme);
+
+  if (theme === "dark") {
+    return "k";
+  }
+
+  if (theme === "light") {
+    return "l";
+  }
+
+  return "c";
+}
+
+function getThemeFromCode(code) {
+  if (code === "k") {
+    return "dark";
+  }
+
+  if (code === "l") {
+    return "light";
+  }
+
+  if (code === "d") {
+    return "classic";
+  }
+
+  return "classic";
+}
+
+function loadStats() {
+  played = Number(localStorage.getItem("qtPlayed")) || 0;
+  correct = Number(localStorage.getItem("qtCorrect")) || 0;
+  wrong = Number(localStorage.getItem("qtWrong")) || 0;
+  streak = Number(localStorage.getItem("qtStreak")) || 0;
+  lastStreak = Number(localStorage.getItem("qtLastStreak")) || 0;
+  bestStreak = Number(localStorage.getItem("qtBestStreak")) || 0;
+}
+
+function saveStats() {
+  localStorage.setItem("qtPlayed", played);
+  localStorage.setItem("qtCorrect", correct);
+  localStorage.setItem("qtWrong", wrong);
+  localStorage.setItem("qtStreak", streak);
+  localStorage.setItem("qtLastStreak", lastStreak);
+  localStorage.setItem("qtBestStreak", bestStreak);
+}
+
+function clearSavedStats() {
+  localStorage.removeItem("qtPlayed");
+  localStorage.removeItem("qtCorrect");
+  localStorage.removeItem("qtWrong");
+  localStorage.removeItem("qtStreak");
+  localStorage.removeItem("qtLastStreak");
+  localStorage.removeItem("qtBestStreak");
+}
+
+function saveQuestionState() {
+  localStorage.setItem("qtCurrentAverage", currentAverage.toFixed(2));
+  localStorage.setItem("qtCurrentCorrectCode", currentCorrect[2]);
+  localStorage.setItem("qtTierBagCodes", JSON.stringify(tierBag.map(range => range[2])));
+}
+
+function clearQuestionState() {
+  localStorage.removeItem("qtCurrentAverage");
+  localStorage.removeItem("qtCurrentCorrectCode");
+  localStorage.removeItem("qtTierBagCodes");
+}
+
+function loadQuestionState() {
+  const savedAverage = Number(localStorage.getItem("qtCurrentAverage"));
+  const savedCorrectCode = localStorage.getItem("qtCurrentCorrectCode");
+  const savedTierBagCodes = localStorage.getItem("qtTierBagCodes");
+  const savedCorrect = getRangeByCode(savedCorrectCode);
+
+  if (!savedAverage || !savedCorrect || !savedTierBagCodes) {
+    return false;
+  }
+
+  try {
+    const codes = JSON.parse(savedTierBagCodes);
+
+    if (!Array.isArray(codes)) {
+      return false;
+    }
+
+    const restoredBag = codes.map(code => getRangeByCode(code)).filter(Boolean);
+
+    currentAverage = savedAverage;
+    currentCorrect = savedCorrect;
+    tierBag = restoredBag;
+
+    document.getElementById("average").innerText = currentAverage.toFixed(2);
+    document.getElementById("answer").value = "";
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = array[i];
+
+    array[i] = array[j];
+    array[j] = temp;
+  }
+
+  return array;
+}
+
+function refillTierBag() {
+  tierBag = shuffle([...ranges]);
+}
+
+function randomAverageFromRange(range) {
+  const min = Math.round(range[0] * 100);
+  const max = Math.round(range[1] * 100);
+  const value = Math.floor(Math.random() * (max - min + 1)) + min;
+
+  return value / 100;
+}
+
+function updateStats() {
+  const accuracy = played === 0 ? 0 : Math.round((correct / played) * 100);
+
+  document.getElementById("stats").innerHTML =
+    "Played: " + played +
+    " | Correct: " + correct +
+    " | Wrong: " + wrong + "<br>" +
+    "Accuracy: " + accuracy + "%<br>" +
+    "Streak: " + streak +
+    " | Last Streak: " + lastStreak +
+    " | Best Streak: " + bestStreak;
+}
+
+function openResetPopup() {
+  document.getElementById("popupOverlay").style.display = "block";
+  document.getElementById("resetPopup").style.display = "block";
+}
+
+function confirmReset() {
+  played = 0;
+  correct = 0;
+  wrong = 0;
+  streak = 0;
+  lastStreak = 0;
+  bestStreak = 0;
+  tierBag = [];
+  answerLocked = false;
+
+  clearSavedStats();
+  clearQuestionState();
+
+  document.getElementById("result").innerHTML = "";
+
+  updateStats();
+  newAverage(false);
+  closeAllPopups();
+}
+
+function newAverage(shouldFocus = true) {
+  answerLocked = false;
+
+  if (tierBag.length === 0) {
+    refillTierBag();
+  }
+
+  currentCorrect = tierBag.pop();
+  currentAverage = randomAverageFromRange(currentCorrect);
+
+  const input = document.getElementById("answer");
+
+  document.getElementById("average").innerText = currentAverage.toFixed(2);
+
+  input.value = "";
+  input.style.opacity = "0.6";
+
+  setTimeout(() => {
+    input.style.opacity = "1";
+  }, 120);
+
+  if (shouldFocus) {
+    input.focus({ preventScroll: true });
+  }
+
+  saveQuestionState();
+}
+
+function normalizeAnswer(raw) {
+  let answer = raw.trim().toLowerCase().replace(/\s/g,"");
+
+  if (answer.startsWith("verypoor")) {
+    answer = answer.replace("verypoor", "1");
+  } else if (answer.startsWith("poor")) {
+    answer = answer.replace("poor", "2");
+  } else if (answer.startsWith("mixed")) {
+    answer = answer.replace("mixed", "3");
+  } else if (answer.startsWith("good")) {
+    answer = answer.replace("good", "4");
+  } else if (answer.startsWith("excellent")) {
+    answer = answer.replace("excellent", "5");
+  }
+
+  answer = answer
+    .replace("iv", "4")
+    .replace("iii", "3")
+    .replace("ii", "2")
+    .replace("i", "1");
+
+  return answer;
+}
+
+function checkAnswer() {
+  if (answerLocked) {
+    return;
+  }
+
+  const raw = document.getElementById("answer").value.trim();
+  const answer = normalizeAnswer(raw);
+  const result = document.getElementById("result");
+
+  if (raw === "") {
+    result.innerHTML = "Enter an answer.";
+    return;
+  }
+
+  if (!validAnswers.includes(answer)) {
+    result.innerHTML = "Invalid answer.";
+    return;
+  }
+
+  answerLocked = true;
+
+  const accepted = [
+    currentCorrect[2],
+    currentCorrect[3].toLowerCase().replace(/\s/g,"")
+  ];
+
+  const acceptedNormalized = accepted.map(a => normalizeAnswer(a));
+
+  played++;
+
+  if (acceptedNormalized.includes(answer)) {
+    correct++;
+    streak++;
+
+    if (streak > bestStreak) {
+      bestStreak = streak;
+    }
+
+    result.innerHTML = "Correct ✅";
+  } else {
+    wrong++;
+    lastStreak = streak;
+    streak = 0;
+
+    result.innerHTML =
+      "Wrong ❌<br>" +
+      "Average missed: " + currentAverage.toFixed(2) + "<br>" +
+      "Your answer: " + raw + "<br>" +
+      "Correct answer: " + currentCorrect[2] + " (" + currentCorrect[3] + ")";
+  }
+
+  updateStats();
+  saveStats();
+  clearQuestionState();
+
+  setTimeout(() => {
+    newAverage(false);
+  }, 700);
+}
+
+function toggleScale() {
+  const scale = document.getElementById("scale");
+  const button = document.getElementById("scaleButton");
+
+  const isHidden = getComputedStyle(scale).display === "none";
+
+  if (isHidden) {
+    scale.style.display = "block";
+    button.innerText = "Close Scale";
+  } else {
+    scale.style.display = "none";
+    button.innerText = "Show Scale";
+  }
+}
+
+function openThemePopup() {
+  document.getElementById("popupOverlay").style.display = "block";
+  document.getElementById("themePopup").style.display = "block";
+}
+
+function openDataPopup() {
+  document.getElementById("popupOverlay").style.display = "block";
+  document.getElementById("dataPopup").style.display = "block";
+}
+
+function closeAllPopups() {
+  document.getElementById("popupOverlay").style.display = "none";
+  document.getElementById("themePopup").style.display = "none";
+  document.getElementById("resetPopup").style.display = "none";
+  document.getElementById("dataPopup").style.display = "none";
+  document.getElementById("backupPopup").style.display = "none";
+  document.getElementById("restorePopup").style.display = "none";
+}
+
+function setTheme(theme, closePopup = true) {
+  const body = document.body;
+  const buttons = document.querySelectorAll("button");
+  const input = document.getElementById("answer");
+  const popups = document.querySelectorAll(".popup");
+
+  currentTheme = normalizeTheme(theme);
+  localStorage.setItem("qtTheme", currentTheme);
+
+  if (currentTheme === "classic") {
+    body.style.background = "#141B26";
+    body.style.color = "white";
+
+    buttons.forEach(button => {
+      button.style.background = "white";
+      button.style.color = "black";
+    });
+
+    input.style.background = "white";
+    input.style.color = "black";
+    input.style.border = "none";
+
+    popups.forEach(popup => {
+      popup.style.background = "#1f2a38";
+      popup.style.color = "white";
+    });
+  }
+
+  if (currentTheme === "dark") {
+    body.style.background = "#000000";
+    body.style.color = "#9A9A9A";
+
+    buttons.forEach(button => {
+      button.style.background = "#2A2A2A";
+      button.style.color = "#B8B8B8";
+    });
+
+    input.style.background = "#2A2A2A";
+    input.style.color = "#B8B8B8";
+    input.style.border = "1px solid #555555";
+
+    popups.forEach(popup => {
+      popup.style.background = "#111111";
+      popup.style.color = "#B8B8B8";
+    });
+  }
+
+  if (currentTheme === "light") {
+    body.style.background = "#FFFFFF";
+    body.style.color = "#000000";
+
+    buttons.forEach(button => {
+      button.style.background = "#000000";
+      button.style.color = "#FFFFFF";
+    });
+
+    input.style.background = "#FFFFFF";
+    input.style.color = "#000000";
+    input.style.border = "2px solid #000000";
+
+    popups.forEach(popup => {
+      popup.style.background = "#FFFFFF";
+      popup.style.color = "#000000";
+    });
+  }
+
+  if (closePopup) {
+    closeAllPopups();
+  }
+}
+
+function encodeBase64Url(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+
+  bytes.forEach(byte => {
+    binary += String.fromCharCode(byte);
+  });
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function decodeBase64Url(text) {
+  let base64 = text.replace(/-/g, "+").replace(/_/g, "/");
+
+  while (base64.length % 4) {
+    base64 += "=";
+  }
+
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new TextDecoder().decode(bytes);
+}
+
+function makeChecksum(text) {
+  let hash = 2166136261;
+
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+
+  return (hash >>> 0).toString(16).toUpperCase().padStart(8, "0");
+}
+
+function createBackupCode() {
+  const data = {
+    v: 1,
+    p: played,
+    c: correct,
+    w: wrong,
+    s: streak,
+    l: lastStreak,
+    b: bestStreak,
+    t: getThemeCode(currentTheme),
+    a: currentAverage,
+    r: currentCorrect[2],
+    g: tierBag.map(range => range[2])
+  };
+
+  const payload = encodeBase64Url(JSON.stringify(data));
+  const checksum = makeChecksum(payload);
+
+  return "QT1|" + payload + "|" + checksum;
+}
+
+function showBackupCode() {
+  document.getElementById("dataPopup").style.display = "none";
+  document.getElementById("backupPopup").style.display = "block";
+  document.getElementById("backupCode").value = createBackupCode();
+  document.getElementById("backupMessage").innerHTML = "";
+}
+
+function copyBackupCode() {
+  const codeBox = document.getElementById("backupCode");
+
+  codeBox.select();
+  codeBox.setSelectionRange(0, 99999);
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(codeBox.value);
+  } else {
+    document.execCommand("copy");
+  }
+
+  document.getElementById("backupMessage").innerHTML = "Copied.";
+}
+
+function showRestoreBox() {
+  document.getElementById("dataPopup").style.display = "none";
+  document.getElementById("restorePopup").style.display = "block";
+  document.getElementById("restoreEntry").style.display = "block";
+  document.getElementById("restoreSuccess").style.display = "none";
+  document.getElementById("restoreCode").value = "";
+  document.getElementById("restoreMessage").innerHTML = "";
+}
+
+function restoreFromCode() {
+  const code = document.getElementById("restoreCode").value.trim();
+  const message = document.getElementById("restoreMessage");
+  const parts = code.split("|");
+
+  if (parts.length !== 3 || parts[0] !== "QT1") {
+    message.innerHTML = "Invalid backup code.";
+    return;
+  }
+
+  const payload = parts[1];
+  const checksum = parts[2];
+
+  if (makeChecksum(payload) !== checksum) {
+    message.innerHTML = "Invalid backup code.";
+    return;
+  }
+
+  try {
+    const data = JSON.parse(decodeBase64Url(payload));
+
+    if (data.v !== 1) {
+      message.innerHTML = "Invalid backup code.";
+      return;
+    }
+
+    const restoredCorrect = getRangeByCode(data.r);
+
+    if (!restoredCorrect) {
+      message.innerHTML = "Invalid backup code.";
+      return;
+    }
+
+    if (!Array.isArray(data.g)) {
+      message.innerHTML = "Invalid backup code.";
+      return;
+    }
+
+    const restoredBag = data.g.map(code => getRangeByCode(code)).filter(Boolean);
+    const restoredPlayed = Number(data.p);
+    const restoredCorrectCount = Number(data.c);
+    const restoredWrong = Number(data.w);
+    const restoredStreak = Number(data.s);
+    const restoredLastStreak = Number(data.l);
+    const restoredBestStreak = Number(data.b);
+    const restoredAverage = Number(data.a);
+    const restoredTheme = getThemeFromCode(data.t);
+
+    if (
+      !Number.isInteger(restoredPlayed) ||
+      !Number.isInteger(restoredCorrectCount) ||
+      !Number.isInteger(restoredWrong) ||
+      !Number.isInteger(restoredStreak) ||
+      !Number.isInteger(restoredLastStreak) ||
+      !Number.isInteger(restoredBestStreak) ||
+      restoredPlayed < 0 ||
+      restoredCorrectCount < 0 ||
+      restoredWrong < 0 ||
+      restoredStreak < 0 ||
+      restoredLastStreak < 0 ||
+      restoredBestStreak < 0 ||
+      restoredPlayed !== restoredCorrectCount + restoredWrong
+    ) {
+      message.innerHTML = "Invalid backup code.";
+      return;
+    }
+
+    if (restoredAverage < restoredCorrect[0] || restoredAverage > restoredCorrect[1]) {
+      message.innerHTML = "Invalid backup code.";
+      return;
+    }
+
+    played = restoredPlayed;
+    correct = restoredCorrectCount;
+    wrong = restoredWrong;
+    streak = restoredStreak;
+    lastStreak = restoredLastStreak;
+    bestStreak = restoredBestStreak;
+    currentAverage = restoredAverage;
+    currentCorrect = restoredCorrect;
+    tierBag = restoredBag;
+    answerLocked = false;
+
+    document.getElementById("average").innerText = currentAverage.toFixed(2);
+    document.getElementById("answer").value = "";
+    document.getElementById("result").innerHTML = "Restored.";
+
+    updateStats();
+    saveStats();
+    saveQuestionState();
+    setTheme(restoredTheme, false);
+
+    document.getElementById("restoreEntry").style.display = "none";
+    document.getElementById("restoreSuccess").style.display = "block";
+    document.getElementById("restoreMessage").innerHTML = "";
+  } catch {
+    message.innerHTML = "Invalid backup code.";
+  }
+}
+
+document.getElementById("answer").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    checkAnswer();
+  }
+});
+
+loadStats();
+setTheme(currentTheme);
+updateStats();
+
+if (!loadQuestionState()) {
+  newAverage(false);
+}
+</script>
+</body>
+</html>
