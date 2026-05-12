@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index Week Calendar Generator</title>
+
+  <style>
+    html, body {
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: #141B26;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 22px;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 26px 0 18px 0;
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.85;
+      margin-bottom: 26px;
+      line-height: 1.45;
+    }
+
+    .tool-wrap {
+      max-width: 480px;
+      margin: 0 auto 24px auto;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.06);
+      padding: 18px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .selected-year {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    button {
+      font-size: 19px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      margin: 6px 0;
+      cursor: pointer;
+      background: white;
+      color: black;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .copy-buttons {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .note {
+      font-size: 15px;
+      opacity: 0.82;
+      margin-top: 12px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    #message {
+      display: none;
+      font-size: 18px;
+      margin-top: 10px;
+      color: #9cff9c;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .error-message {
+      color: #ff8888 !important;
+    }
+
+    .preview-title {
+      max-width: 760px;
+      margin: 24px auto 10px auto;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .preview-wrap {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      background: white;
+      color: black;
+      border-radius: 12px;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .preview-year-title {
+      font-family: monospace;
+      font-size: 17px;
+      text-align: left;
+      padding: 14px 14px 10px 14px;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+      color: black;
+    }
+
+    .preview-placeholder {
+      color: #777;
+    }
+
+    .preview-divider {
+      height: 1px;
+      background: #d0d0d0;
+      width: 100%;
+    }
+
+    textarea {
+      width: 100%;
+      height: 430px;
+      font-size: 15px;
+      border: none;
+      padding: 14px;
+      box-sizing: border-box;
+      resize: vertical;
+      background: white;
+      color: black;
+      line-height: 1.4;
+      font-family: monospace;
+      outline: none;
+      display: block;
+    }
+
+    textarea::placeholder {
+      color: #777;
+      opacity: 1;
+    }
+
+    .reset-wrap {
+      width: 100%;
+      max-width: 760px;
+      margin: 16px auto 0 auto;
+    }
+
+    #popupOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #1f2a38;
+      color: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      z-index: 10;
+      width: 310px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    .popup-title {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .popup-note {
+      font-size: 18px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .popup button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    @media (min-width: 600px) {
+      body {
+        padding: 28px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .copy-buttons {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .preview-year-title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Index Week Calendar Generator</h1>
+
+  <div class="subtitle">
+    Generate formatted weekly Index Score calendar ranges.<br>
+    Choose a year, then copy the week ranges for each weekly graph.
+  </div>
+
+  <div class="tool-wrap">
+    <div class="card">
+      <div class="card-title">1. Choose Year</div>
+      <div id="selectedYearDisplay" class="selected-year"></div>
+      <button id="yearButton" onclick="openDecadePopup()">Choose Year</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. Generate</div>
+      <button onclick="generateCalendar()">Generate Weeks</button>
+      <div id="message"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3. Copy</div>
+
+      <div class="copy-buttons">
+        <button onclick="copyGraphWeeks(1)">Copy Graph 1 Weeks</button>
+        <button onclick="copyGraphWeeks(2)">Copy Graph 2 Weeks</button>
+        <button onclick="copyGraphWeeks(3)">Copy Graph 3 Weeks</button>
+        <button onclick="copyGraphWeeks(4)">Copy Graph 4 Weeks</button>
+      </div>
+
+      <div class="note">
+        Copy week ranges for the corresponding weekly graph section.<br>
+        Full weeks are included even when they extend into another year.
+      </div>
+    </div>
+  </div>
+
+  <div id="previewTitle" class="preview-title">Preview</div>
+
+  <div class="preview-wrap">
+    <div id="previewYearTitle" class="preview-year-title preview-placeholder">Selected year will appear here.</div>
+    <div class="preview-divider"></div>
+    <textarea id="output" readonly placeholder="Generated week ranges will appear here."></textarea>
+  </div>
+
+  <div class="reset-wrap">
+    <button onclick="openResetPopup()">Reset</button>
+  </div>
+
+  <div id="popupOverlay" onclick="closeAllPopups()"></div>
+
+  <div id="decadePopup" class="popup">
+    <div class="popup-title">Choose Decade</div>
+    <div id="decadeList"></div>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <div id="yearPopup" class="popup">
+    <div class="popup-title">Choose Year</div>
+    <div id="yearList"></div>
+    <button onclick="openDecadePopup()">Back to Decades</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <div id="resetPopup" class="popup">
+    <div class="popup-title">Reset?</div>
+    <div class="popup-note">
+      This will clear the selected year and generated preview.
+    </div>
+    <button onclick="confirmReset()">Reset</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <script>
+    const shortMonthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
+
+    const graphGroups = {
+      1: "Graph 1: Week 52, Week 53, Week 1–13",
+      2: "Graph 2: Week 14–26",
+      3: "Graph 3: Week 27–39",
+      4: "Graph 4: Week 40–53, Week 1"
+    };
+
+    let selectedYear = null;
+    let generatedWeeks = [];
+    let fullPreviewText = "";
+    let graphPlainTexts = {
+      1: "",
+      2: "",
+      3: "",
+      4: ""
+    };
+    let graphHtmlTexts = {
+      1: "",
+      2: "",
+      3: "",
+      4: ""
+    };
+
+    function setupDecadeList() {
+      const decadeList = document.getElementById("decadeList");
+      decadeList.innerHTML = "";
+
+      for (let decade = 2020; decade <= 2090; decade += 10) {
+        const button = document.createElement("button");
+        button.textContent = decade + "s";
+        button.onclick = function() {
+          openYearPopup(decade);
+        };
+        decadeList.appendChild(button);
+      }
+    }
+
+    function openDecadePopup() {
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("decadePopup").style.display = "block";
+      document.getElementById("yearPopup").style.display = "none";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function openYearPopup(decade) {
+      const yearList = document.getElementById("yearList");
+      yearList.innerHTML = "";
+
+      for (let year = decade; year <= decade + 9; year++) {
+        const button = document.createElement("button");
+        button.textContent = year;
+        button.onclick = function() {
+          selectYear(year);
+        };
+        yearList.appendChild(button);
+      }
+
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("decadePopup").style.display = "none";
+      document.getElementById("yearPopup").style.display = "block";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function openResetPopup() {
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("decadePopup").style.display = "none";
+      document.getElementById("yearPopup").style.display = "none";
+      document.getElementById("resetPopup").style.display = "block";
+    }
+
+    function closeAllPopups() {
+      document.getElementById("popupOverlay").style.display = "none";
+      document.getElementById("decadePopup").style.display = "none";
+      document.getElementById("yearPopup").style.display = "none";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function confirmReset() {
+      selectedYear = null;
+      generatedWeeks = [];
+      fullPreviewText = "";
+      graphPlainTexts = {
+        1: "",
+        2: "",
+        3: "",
+        4: ""
+      };
+      graphHtmlTexts = {
+        1: "",
+        2: "",
+        3: "",
+        4: ""
+      };
+
+      updateSelectedYearDisplay();
+      clearGeneratedCalendar();
+      closeAllPopups();
+    }
+
+    function selectYear(year) {
+      selectedYear = year;
+      updateSelectedYearDisplay();
+      clearGeneratedCalendar();
+      closeAllPopups();
+    }
+
+    function updateSelectedYearDisplay() {
+      const display = document.getElementById("selectedYearDisplay");
+      const button = document.getElementById("yearButton");
+
+      if (selectedYear === null) {
+        display.textContent = "";
+        button.textContent = "Choose Year";
+      } else {
+        display.textContent = "Year: " + selectedYear;
+        button.textContent = "Change Year";
+      }
+    }
+
+    function clearGeneratedCalendar() {
+      generatedWeeks = [];
+      fullPreviewText = "";
+      graphPlainTexts = {
+        1: "",
+        2: "",
+        3: "",
+        4: ""
+      };
+      graphHtmlTexts = {
+        1: "",
+        2: "",
+        3: "",
+        4: ""
+      };
+
+      document.getElementById("output").value = "";
+      document.getElementById("previewTitle").textContent = "Preview";
+
+      const previewYearTitle = document.getElementById("previewYearTitle");
+      previewYearTitle.textContent = "Selected year will appear here.";
+      previewYearTitle.classList.add("preview-placeholder");
+
+      hideMessage();
+    }
+
+    function showMessage(text, isError = false) {
+      const message = document.getElementById("message");
+      message.textContent = text;
+      message.style.display = "block";
+
+      if (isError) {
+        message.classList.add("error-message");
+      } else {
+        message.classList.remove("error-message");
+      }
+    }
+
+    function hideMessage() {
+      const message = document.getElementById("message");
+      message.textContent = "";
+      message.style.display = "none";
+      message.classList.remove("error-message");
+    }
+
+    function addDays(date, days) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+    }
+
+    function getMondayOfWeek(date) {
+      const dayOffset = (date.getDay() + 6) % 7;
+      return addDays(date, -dayOffset);
+    }
+
+    function getIsoWeekInfo(date) {
+      const working = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const dayNumber = (working.getDay() + 6) % 7;
+
+      working.setDate(working.getDate() - dayNumber + 3);
+
+      const isoYear = working.getFullYear();
+      const firstThursday = new Date(isoYear, 0, 4);
+      const firstThursdayDayNumber = (firstThursday.getDay() + 6) % 7;
+
+      firstThursday.setDate(firstThursday.getDate() - firstThursdayDayNumber + 3);
+
+      const weekNumber =
+        1 + Math.round((working - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+
+      return {
+        year: isoYear,
+        week: weekNumber
+      };
+    }
+
+    function getDaysInMonth(year, monthIndex) {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+
+    function formatDatePart(date, addBracket, includeYear) {
+      const month = shortMonthNames[date.getMonth()];
+      const day = date.getDate();
+      const lastDay = getDaysInMonth(date.getFullYear(), date.getMonth());
+
+      let text = month + " " + day;
+
+      if (addBracket) {
+        text += "[" + lastDay + "]";
+      }
+
+      if (includeYear) {
+        text += ", " + date.getFullYear();
+      }
+
+      return text;
+    }
+
+    function formatWeekRange(entry) {
+      const crossesMonth =
+        entry.start.getMonth() !== entry.end.getMonth() ||
+        entry.start.getFullYear() !== entry.end.getFullYear();
+
+      const startNeedsYear = entry.start.getFullYear() !== selectedYear;
+      const endNeedsYear = entry.end.getFullYear() !== selectedYear;
+
+      const startText = formatDatePart(entry.start, crossesMonth, startNeedsYear);
+      const endText = formatDatePart(entry.end, false, endNeedsYear);
+
+      return "Week " + entry.week + ": " + startText + " – " + endText;
+    }
+
+    function buildGeneratedWeeks(year) {
+      const janFirst = new Date(year, 0, 1);
+      const decLast = new Date(year, 11, 31);
+
+      let weekStart = getMondayOfWeek(janFirst);
+      const weeks = [];
+
+      while (weekStart <= decLast) {
+        const weekEnd = addDays(weekStart, 6);
+        const isoInfo = getIsoWeekInfo(weekStart);
+
+        const entry = {
+          start: new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()),
+          end: weekEnd,
+          isoYear: isoInfo.year,
+          week: isoInfo.week
+        };
+
+        entry.line = formatWeekRange(entry);
+        weeks.push(entry);
+
+        weekStart = addDays(weekStart, 7);
+      }
+
+      return weeks;
+    }
+
+    function belongsToGraph(entry, graphNumber) {
+      if (graphNumber === 1) {
+        return (
+          (entry.isoYear < selectedYear && (entry.week === 52 || entry.week === 53)) ||
+          (entry.isoYear === selectedYear && entry.week >= 1 && entry.week <= 13)
+        );
+      }
+
+      if (graphNumber === 2) {
+        return entry.isoYear === selectedYear && entry.week >= 14 && entry.week <= 26;
+      }
+
+      if (graphNumber === 3) {
+        return entry.isoYear === selectedYear && entry.week >= 27 && entry.week <= 39;
+      }
+
+      if (graphNumber === 4) {
+        return (
+          (entry.isoYear === selectedYear && entry.week >= 40 && entry.week <= 53) ||
+          (entry.isoYear > selectedYear && entry.week === 1)
+        );
+      }
+
+      return false;
+    }
+
+    function buildGraphTexts() {
+      for (let graphNumber = 1; graphNumber <= 4; graphNumber++) {
+        const entries = generatedWeeks.filter(function(entry) {
+          return belongsToGraph(entry, graphNumber);
+        });
+
+        const plainLines = entries.map(function(entry) {
+          return entry.line;
+        });
+
+        const htmlLines = entries.map(function(entry) {
+          return "<div>" + entry.line + "</div>";
+        });
+
+        graphPlainTexts[graphNumber] = plainLines.join("\n");
+        graphHtmlTexts[graphNumber] = htmlLines.join("");
+      }
+    }
+
+    function generateCalendar() {
+      if (selectedYear === null) {
+        showMessage("Choose a year first.", true);
+        return;
+      }
+
+      generatedWeeks = buildGeneratedWeeks(selectedYear);
+      buildGraphTexts();
+
+      fullPreviewText = generatedWeeks.map(function(entry) {
+        return entry.line;
+      }).join("\n");
+
+      updatePreview();
+
+      const output = document.getElementById("output");
+      output.scrollTop = 0;
+
+      showMessage(selectedYear + " weeks generated.");
+    }
+
+    function updatePreview() {
+      const output = document.getElementById("output");
+      const previewYearTitle = document.getElementById("previewYearTitle");
+
+      document.getElementById("previewTitle").textContent = "Preview";
+
+      previewYearTitle.textContent = "Weekly Graphs (" + selectedYear + ")";
+      previewYearTitle.classList.remove("preview-placeholder");
+
+      output.value = fullPreviewText;
+      output.scrollTop = 0;
+    }
+
+    function ensureGenerated() {
+      if (!fullPreviewText) {
+        showMessage("Press Generate Weeks first.", true);
+        return false;
+      }
+
+      return true;
+    }
+
+    function copyGraphWeeks(graphNumber) {
+      if (!ensureGenerated()) return;
+
+      const plainText = graphPlainTexts[graphNumber];
+      const htmlText = graphHtmlTexts[graphNumber];
+
+      if (!plainText || !htmlText) {
+        showMessage("No available weeks for Graph " + graphNumber + ".", true);
+        return;
+      }
+
+      copyRichText(
+        plainText,
+        htmlText,
+        "Graph " + graphNumber + " weeks copied."
+      );
+    }
+
+    function copyRichText(plainText, htmlText, successMessage) {
+      if (!plainText || !htmlText) {
+        showMessage("Nothing to copy yet.", true);
+        return;
+      }
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        const htmlBlob = new Blob([htmlText], { type: "text/html" });
+        const plainBlob = new Blob([plainText], { type: "text/plain" });
+
+        const item = new ClipboardItem({
+          "text/html": htmlBlob,
+          "text/plain": plainBlob
+        });
+
+        navigator.clipboard.write([item]).then(function() {
+          showMessage(successMessage);
+        }).catch(function() {
+          fallbackCopyPlainText(plainText, successMessage);
+        });
+      } else {
+        fallbackCopyPlainText(plainText, successMessage);
+      }
+    }
+
+    function fallbackCopyPlainText(text, successMessage) {
+      const tempBox = document.createElement("textarea");
+      tempBox.value = text;
+      tempBox.setAttribute("readonly", "");
+      tempBox.style.position = "fixed";
+      tempBox.style.left = "-9999px";
+      tempBox.style.top = "-9999px";
+      tempBox.style.opacity = "0";
+
+      document.body.appendChild(tempBox);
+
+      tempBox.focus();
+      tempBox.select();
+      tempBox.setSelectionRange(0, tempBox.value.length);
+
+      try {
+        document.execCommand("copy");
+        showMessage(successMessage);
+      } catch {
+        showMessage("Copy failed. Select and copy manually.", true);
+      }
+
+      document.body.removeChild(tempBox);
+    }
+
+    setupDecadeList();
+    updateSelectedYearDisplay();
+    clearGeneratedCalendar();
+  </script>
+</body>
+</html>
