@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index ARQ Calculator</title>
+
+  <style>
+    html,
+    body {
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: #141B26;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 28px;
+      margin: 0;
+      font-size: 18px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 0 0 18px 0;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.85;
+      margin-bottom: 28px;
+      line-height: 1.35;
+    }
+
+    .panel {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .mode-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      margin: 6px;
+      cursor: pointer;
+      background: white;
+      color: black;
+    }
+
+    button.active-mode {
+      background: #5BC0BE;
+      color: #071014;
+      font-weight: bold;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      align-items: center;
+      gap: 14px;
+      max-width: 430px;
+      margin: 0 auto 28px auto;
+      text-align: left;
+      font-size: 20px;
+    }
+
+    input,
+    select {
+      font-size: 20px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: black;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    select {
+      text-align-last: center;
+      cursor: pointer;
+      color-scheme: light;
+      background: white;
+      color: black;
+    }
+
+    option {
+      background: white;
+      color: black;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      max-width: 430px;
+      margin: 0 auto 28px auto;
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      font-size: 20px;
+    }
+
+    .month-score-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 22px;
+      max-width: 560px;
+      margin: 0 auto 28px auto;
+    }
+
+    .month-score-row {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+      font-size: 18px;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 4px 0 24px 0;
+    }
+
+    .generate-area {
+      margin: 0 0 30px 0;
+    }
+
+    #results {
+      max-width: 460px;
+      margin: 0 auto 24px auto;
+      font-size: 20px;
+      line-height: 1.45;
+      min-height: 112px;
+      text-align: left;
+    }
+
+    .summary-line {
+      margin: 0 0 14px 0;
+      font-weight: normal;
+    }
+
+    .summary-line:last-child {
+      margin-bottom: 0;
+    }
+
+    .result-label {
+      font-weight: normal;
+    }
+
+    .copy-area {
+      margin: 0 0 10px 0;
+    }
+
+    .status-message {
+      font-weight: bold;
+      font-size: 17px;
+      margin: 0 0 10px 0;
+    }
+
+    .status-message:empty {
+      display: none;
+    }
+
+    .status-success {
+      color: #7CFF9B;
+    }
+
+    .status-error {
+      color: #ff7777;
+    }
+
+    .reset-area {
+      margin: 0 0 8px 0;
+    }
+
+    .error {
+      color: #ff7777;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .empty-note {
+      opacity: 0.85;
+      font-size: 18px;
+      margin: 0 auto 28px auto;
+      line-height: 1.4;
+    }
+
+    #popupOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #1f2a38;
+      color: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      z-index: 10;
+      width: 300px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .popup button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    .popup-title {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .popup-note {
+      font-size: 19px;
+      margin-bottom: 18px;
+      line-height: 1.35;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 28px 18px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .subtitle {
+        font-size: 18px;
+      }
+
+      button {
+        font-size: 20px;
+        padding: 10px 14px;
+      }
+
+      .control-row {
+        grid-template-columns: 72px 1fr;
+        max-width: 430px;
+        font-size: 20px;
+      }
+
+      .score-grid {
+        max-width: 430px;
+      }
+
+      .score-row {
+        grid-template-columns: 72px 1fr;
+        font-size: 20px;
+      }
+
+      .month-score-grid {
+        gap: 12px 16px;
+      }
+
+      .month-score-row {
+        grid-template-columns: 30px 1fr;
+        font-size: 18px;
+      }
+
+      input,
+      select {
+        font-size: 20px;
+      }
+
+      #results {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Index ARQ Calculator</h1>
+
+  <div class="subtitle">
+    Calculate weekly or monthly averages, ratings, and qualities.
+  </div>
+
+  <main class="panel">
+    <div class="mode-buttons">
+      <button id="weekModeButton" class="active-mode" onclick="setMode('week')">Week Summary</button>
+      <button id="monthModeButton" onclick="setMode('month')">Month Summary</button>
+    </div>
+
+    <section id="weekPanel">
+      <div class="control-row">
+        <label for="weekNumber">Week #</label>
+        <input id="weekNumber" type="number" min="1" max="53" step="1" placeholder="1–53" data-placeholder="1–53">
+      </div>
+
+      <div class="score-grid">
+        <div class="score-row">
+          <label for="monday">Mon</label>
+          <input id="monday" class="week-score" type="number" min="1" max="5" step="1" placeholder="1–5" data-placeholder="1–5">
+        </div>
+
+        <div class="score-row">
+          <label for="tuesday">Tues</label>
+          <input id="tuesday" class="week-score" type="number" min="1" max="5" step="1" placeholder="1–5" data-placeholder="1–5">
+        </div>
+
+        <div class="score-row">
+          <label for="wednesday">Wed</label>
+          <input id="wednesday" class="week-score" type="number" min="1" max="5" step="1" placeholder="1–5" data-placeholder="1–5">
+        </div>
+
+        <div class="score-row">
+          <label for="thursday">Thurs</label>
+          <input id="thursday" class="week-score" type="number" min="1" max="5" step="1" placeholder="1–5" data-placeholder="1–5">
+        </div>
+
+        <div class="score-row">
+          <label for="friday">Fri</label>
+          <input id="friday" class="week-score" type="number" min="1" max="5" step="1" placeholder="1–5" data-placeholder="1–5">
+        </div>
+
+        <div class="score-row">
+          <label for="saturday">Sat</label>
+          <input id="saturday" class="week-score" type="number" min="1" max="5" step="1" placeholder="1–5" data-placeholder="1–5">
+        </div>
+
+        <div class="score-row">
+          <label for="sunday">Sun</label>
+          <input id="sunday" class="week-score" type="number" min="1" max="5" step="1" placeholder="1–5" data-placeholder="1–5">
+        </div>
+      </div>
+
+      <div class="generate-area">
+        <button onclick="generateSummary()">Generate Week Summary</button>
+      </div>
+    </section>
+
+    <section id="monthPanel" class="hidden">
+      <div class="control-row">
+        <label for="monthSelect">Month</label>
+        <select id="monthSelect" onchange="handleMonthChange()">
+          <option value="">Select Month</option>
+          <option value="January">January</option>
+          <option value="February">February</option>
+          <option value="March">March</option>
+          <option value="April">April</option>
+          <option value="May">May</option>
+          <option value="June">June</option>
+          <option value="July">July</option>
+          <option value="August">August</option>
+          <option value="September">September</option>
+          <option value="October">October</option>
+          <option value="November">November</option>
+          <option value="December">December</option>
+        </select>
+      </div>
+
+      <div id="monthTitle" class="section-title hidden"></div>
+      <div id="monthEmptyNote" class="empty-note">Select a month to enter daily scores.</div>
+      <div id="monthScoreGrid" class="month-score-grid"></div>
+
+      <div class="generate-area">
+        <button onclick="generateSummary()">Generate Month Summary</button>
+      </div>
+    </section>
+
+    <div id="results">
+      <div class="summary-line"><span class="result-label">Week Average</span> –</div>
+      <div class="summary-line"><span class="result-label">Week Rating</span> –</div>
+      <div class="summary-line"><span class="result-label">Week Quality</span> –</div>
+    </div>
+
+    <div class="copy-area">
+      <button id="copyWeekButton" onclick="copySummary()">Copy Week Summary</button>
+      <button id="copyMonthButton" class="hidden" onclick="copySummary()">Copy Month Summary</button>
+    </div>
+
+    <div id="copyMessage" class="status-message"></div>
+
+    <div class="reset-area">
+      <button onclick="openResetPopup()">Reset</button>
+    </div>
+  </main>
+
+  <div id="popupOverlay" onclick="closeAllPopups()"></div>
+
+  <div id="resetPopup" class="popup">
+    <div id="resetPopupTitle" class="popup-title">Reset?</div>
+    <div id="resetPopupNote" class="popup-note"></div>
+    <button id="resetConfirmButton" onclick="confirmReset()">Reset</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <script>
+    let currentMode = "week";
+    let latestSummaryText = "";
+    let latestSummaryHtml = "";
+
+    const storagePrefix = "indexArqCalculator.";
+
+    const weekInputIds = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ];
+
+    const monthDayCounts = {
+      January: 31,
+      February: 29,
+      March: 31,
+      April: 30,
+      May: 31,
+      June: 30,
+      July: 31,
+      August: 31,
+      September: 30,
+      October: 31,
+      November: 30,
+      December: 31
+    };
+
+    const qualities = [
+      [1.00, 1.24, "🟥 Very Poor I"],
+      [1.25, 1.49, "🟥 Very Poor II"],
+      [1.50, 1.74, "🟧 Poor I"],
+      [1.75, 1.99, "🟧 Poor II"],
+      [2.00, 2.24, "🟧 Poor III"],
+      [2.25, 2.49, "🟧 Poor IV"],
+      [2.50, 2.74, "🟨 Mixed I"],
+      [2.75, 2.99, "🟨 Mixed II"],
+      [3.00, 3.24, "🟨 Mixed III"],
+      [3.25, 3.49, "🟨 Mixed IV"],
+      [3.50, 3.74, "🟩 Good I"],
+      [3.75, 3.99, "🟩 Good II"],
+      [4.00, 4.24, "🟩 Good III"],
+      [4.25, 4.49, "🟩 Good IV"],
+      [4.50, 4.74, "🟦 Excellent I"],
+      [4.75, 5.00, "🟦 Excellent II"]
+    ];
+
+    function truncateToTwoDecimals(number) {
+      return Math.trunc(number * 100) / 100;
+    }
+
+    function formatTwoDecimals(number) {
+      return number.toFixed(2);
+    }
+
+    function clearCopyMessage() {
+      const copyMessage = document.getElementById("copyMessage");
+      copyMessage.textContent = "";
+      copyMessage.className = "status-message";
+    }
+
+    function saveValue(key, value) {
+      localStorage.setItem(storagePrefix + key, value);
+    }
+
+    function loadValue(key, fallback = "") {
+      const value = localStorage.getItem(storagePrefix + key);
+      return value === null ? fallback : value;
+    }
+
+    function removeSavedValue(key) {
+      localStorage.removeItem(storagePrefix + key);
+    }
+
+    function saveCurrentMode() {
+      saveValue("currentMode", currentMode);
+    }
+
+    function saveSelectedMonth() {
+      saveValue("selectedMonth", document.getElementById("monthSelect").value);
+    }
+
+    function saveWeekNumber() {
+      saveValue("weekNumber", document.getElementById("weekNumber").value);
+      clearSavedWeekSummary();
+      showCurrentSavedSummary();
+    }
+
+    function saveWeekScore(id) {
+      saveValue("weekScore." + id, document.getElementById(id).value);
+      clearSavedWeekSummary();
+      showCurrentSavedSummary();
+    }
+
+    function saveMonthScore(day, value) {
+      saveValue("monthScore." + day, value);
+      clearSavedMonthSummary();
+      showCurrentSavedSummary();
+    }
+
+    function restoreSavedInputs() {
+      document.getElementById("weekNumber").value = loadValue("weekNumber", "");
+
+      for (const id of weekInputIds) {
+        document.getElementById(id).value = loadValue("weekScore." + id, "");
+      }
+
+      document.getElementById("monthSelect").value = loadValue("selectedMonth", "");
+    }
+
+    function getWeekLabel() {
+      const rawWeekNumber = document.getElementById("weekNumber").value.trim();
+      const weekNumber = Number(rawWeekNumber);
+
+      if (rawWeekNumber === "") {
+        return "Week";
+      }
+
+      if (!Number.isInteger(weekNumber) || weekNumber < 1 || weekNumber > 53) {
+        return null;
+      }
+
+      return "Week " + weekNumber;
+    }
+
+    function getMonthLabel() {
+      const month = document.getElementById("monthSelect").value;
+      return month === "" ? "Month" : month;
+    }
+
+    function getCurrentLabel() {
+      if (currentMode === "week") {
+        return getWeekLabel();
+      }
+
+      return getMonthLabel();
+    }
+
+    function getQuality(average) {
+      for (const quality of qualities) {
+        const min = quality[0];
+        const max = quality[1];
+        const label = quality[2];
+
+        if (average >= min && average <= max) {
+          return label;
+        }
+      }
+
+      return "—";
+    }
+
+    function getScoresFromInputs(inputs) {
+      const scores = [];
+
+      for (const input of inputs) {
+        const raw = input.value.trim();
+
+        if (raw === "") {
+          continue;
+        }
+
+        const score = Number(raw);
+
+        if (!Number.isInteger(score) || score < 1 || score > 5) {
+          return null;
+        }
+
+        scores.push(score);
+      }
+
+      return scores;
+    }
+
+    function getWeekScores() {
+      const inputs = weekInputIds.map(id => document.getElementById(id));
+      return getScoresFromInputs(inputs);
+    }
+
+    function getMonthScores() {
+      const inputs = Array.from(document.querySelectorAll(".month-score"));
+      return getScoresFromInputs(inputs);
+    }
+
+    function getCurrentScores() {
+      if (currentMode === "week") {
+        return getWeekScores();
+      }
+
+      return getMonthScores();
+    }
+
+    function getBlankResultsHtml(label) {
+      return (
+        '<div class="summary-line"><span class="result-label">' + label + ' Average</span> –</div>' +
+        '<div class="summary-line"><span class="result-label">' + label + ' Rating</span> –</div>' +
+        '<div class="summary-line"><span class="result-label">' + label + ' Quality</span> –</div>'
+      );
+    }
+
+    function getSummaryPreviewHtml(summary) {
+      return (
+        '<div class="summary-line"><span class="result-label">' + summary.label + ' Average</span> – ' + summary.average + '</div>' +
+        '<div class="summary-line"><span class="result-label">' + summary.label + ' Rating</span> – ' + summary.rating + '</div>' +
+        '<div class="summary-line"><span class="result-label">' + summary.label + ' Quality</span> – ' + summary.quality + '</div>'
+      );
+    }
+
+    function getSummaryPlainText(summary) {
+      return (
+        summary.label + ' Average – ' + summary.average + '\n\n' +
+        summary.label + ' Rating – ' + summary.rating + '\n\n' +
+        summary.label + ' Quality – ' + summary.quality
+      );
+    }
+
+    function getSummaryClipboardHtml(summary) {
+      return (
+        '<p>' + summary.label + ' Average – ' + summary.average + '</p>' +
+        '<p>' + summary.label + ' Rating – ' + summary.rating + '</p>' +
+        '<p>' + summary.label + ' Quality – ' + summary.quality + '</p>'
+      );
+    }
+
+    function saveSummary(mode, summary) {
+      saveValue(mode + "Summary.label", summary.label);
+      saveValue(mode + "Summary.average", summary.average);
+      saveValue(mode + "Summary.rating", summary.rating);
+      saveValue(mode + "Summary.quality", summary.quality);
+      saveValue(mode + "Summary.text", getSummaryPlainText(summary));
+      saveValue(mode + "Summary.html", getSummaryClipboardHtml(summary));
+    }
+
+    function getSavedSummary(mode) {
+      const label = loadValue(mode + "Summary.label", "");
+
+      if (label === "") {
+        return null;
+      }
+
+      return {
+        label: label,
+        average: loadValue(mode + "Summary.average", ""),
+        rating: loadValue(mode + "Summary.rating", ""),
+        quality: loadValue(mode + "Summary.quality", ""),
+        text: loadValue(mode + "Summary.text", ""),
+        html: loadValue(mode + "Summary.html", "")
+      };
+    }
+
+    function clearSavedWeekSummary() {
+      removeSavedValue("weekSummary.label");
+      removeSavedValue("weekSummary.average");
+      removeSavedValue("weekSummary.rating");
+      removeSavedValue("weekSummary.quality");
+      removeSavedValue("weekSummary.text");
+      removeSavedValue("weekSummary.html");
+      clearCopyMessage();
+    }
+
+    function clearSavedMonthSummary() {
+      removeSavedValue("monthSummary.label");
+      removeSavedValue("monthSummary.average");
+      removeSavedValue("monthSummary.rating");
+      removeSavedValue("monthSummary.quality");
+      removeSavedValue("monthSummary.text");
+      removeSavedValue("monthSummary.html");
+      clearCopyMessage();
+    }
+
+    function showCurrentSavedSummary() {
+      const mode = currentMode;
+      const savedSummary = getSavedSummary(mode);
+      const label = getCurrentLabel() || (mode === "week" ? "Week" : "Month");
+
+      if (savedSummary === null) {
+        latestSummaryText = "";
+        latestSummaryHtml = "";
+        document.getElementById("results").innerHTML = getBlankResultsHtml(label);
+        return;
+      }
+
+      latestSummaryText = savedSummary.text;
+      latestSummaryHtml = savedSummary.html;
+      document.getElementById("results").innerHTML = getSummaryPreviewHtml(savedSummary);
+    }
+
+    function generateSummary() {
+      clearCopyMessage();
+
+      const label = getCurrentLabel();
+      const results = document.getElementById("results");
+
+      latestSummaryText = "";
+      latestSummaryHtml = "";
+
+      if (currentMode === "week") {
+        const rawWeekNumber = document.getElementById("weekNumber").value.trim();
+        const weekNumber = Number(rawWeekNumber);
+
+        if (rawWeekNumber === "" || !Number.isInteger(weekNumber) || weekNumber < 1 || weekNumber > 53) {
+          results.innerHTML = '<div class="error">Enter a week number from 1 to 53.</div>';
+          clearSavedWeekSummary();
+          return;
+        }
+      }
+
+      if (currentMode === "month" && document.getElementById("monthSelect").value === "") {
+        results.innerHTML = '<div class="error">Select a month.</div>';
+        clearSavedMonthSummary();
+        return;
+      }
+
+      const scores = getCurrentScores();
+
+      if (scores === null) {
+        results.innerHTML = '<div class="error">Enter only whole numbers from 1 to 5.</div>';
+
+        if (currentMode === "week") {
+          clearSavedWeekSummary();
+        } else {
+          clearSavedMonthSummary();
+        }
+
+        return;
+      }
+
+      if (scores.length === 0) {
+        results.innerHTML = getBlankResultsHtml(label);
+
+        if (currentMode === "week") {
+          clearSavedWeekSummary();
+        } else {
+          clearSavedMonthSummary();
+        }
+
+        return;
+      }
+
+      const sum = scores.reduce((total, score) => total + score, 0);
+      const rawAverage = sum / scores.length;
+      const average = truncateToTwoDecimals(rawAverage);
+      const rating = ((average - 1) / 4) * 100;
+      const quality = getQuality(average);
+
+      const summary = {
+        label: label,
+        average: formatTwoDecimals(average),
+        rating: formatTwoDecimals(rating) + "%",
+        quality: quality
+      };
+
+      results.innerHTML = getSummaryPreviewHtml(summary);
+      latestSummaryText = getSummaryPlainText(summary);
+      latestSummaryHtml = getSummaryClipboardHtml(summary);
+      saveSummary(currentMode, summary);
+    }
+
+    async function copySummary() {
+      const copyMessage = document.getElementById("copyMessage");
+
+      if (latestSummaryText === "") {
+        copyMessage.textContent = "Generate a summary first.";
+        copyMessage.className = "status-message status-error";
+        return;
+      }
+
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          const htmlBlob = new Blob([latestSummaryHtml], { type: "text/html" });
+          const textBlob = new Blob([latestSummaryText], { type: "text/plain" });
+
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              "text/html": htmlBlob,
+              "text/plain": textBlob
+            })
+          ]);
+        } else {
+          await navigator.clipboard.writeText(latestSummaryText);
+        }
+
+        copyMessage.textContent = "Summary copied.";
+        copyMessage.className = "status-message status-success";
+      } catch (error) {
+        fallbackCopyText(latestSummaryText);
+        copyMessage.textContent = "Summary copied.";
+        copyMessage.className = "status-message status-success";
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      saveCurrentMode();
+
+      clearCopyMessage();
+
+      const weekPanel = document.getElementById("weekPanel");
+      const monthPanel = document.getElementById("monthPanel");
+      const weekModeButton = document.getElementById("weekModeButton");
+      const monthModeButton = document.getElementById("monthModeButton");
+      const copyWeekButton = document.getElementById("copyWeekButton");
+      const copyMonthButton = document.getElementById("copyMonthButton");
+
+      if (mode === "week") {
+        weekPanel.classList.remove("hidden");
+        monthPanel.classList.add("hidden");
+        weekModeButton.classList.add("active-mode");
+        monthModeButton.classList.remove("active-mode");
+        copyWeekButton.classList.remove("hidden");
+        copyMonthButton.classList.add("hidden");
+      } else {
+        weekPanel.classList.add("hidden");
+        monthPanel.classList.remove("hidden");
+        weekModeButton.classList.remove("active-mode");
+        monthModeButton.classList.add("active-mode");
+        copyWeekButton.classList.add("hidden");
+        copyMonthButton.classList.remove("hidden");
+      }
+
+      showCurrentSavedSummary();
+    }
+
+    function handleMonthChange() {
+      const month = document.getElementById("monthSelect").value;
+      saveSelectedMonth();
+
+      if (month !== "") {
+        deleteUnavailableMonthScores(monthDayCounts[month]);
+      }
+
+      buildMonthInputs();
+      clearSavedMonthSummary();
+      showCurrentSavedSummary();
+    }
+
+    function deleteUnavailableMonthScores(dayCount) {
+      for (let day = dayCount + 1; day <= 31; day++) {
+        removeSavedValue("monthScore." + day);
+      }
+    }
+
+    function buildMonthInputs() {
+      const month = document.getElementById("monthSelect").value;
+      const grid = document.getElementById("monthScoreGrid");
+      const title = document.getElementById("monthTitle");
+      const emptyNote = document.getElementById("monthEmptyNote");
+
+      grid.innerHTML = "";
+
+      if (month === "") {
+        title.textContent = "";
+        title.classList.add("hidden");
+        emptyNote.classList.remove("hidden");
+        return;
+      }
+
+      const dayCount = monthDayCounts[month];
+
+      title.textContent = month;
+      title.classList.remove("hidden");
+      emptyNote.classList.add("hidden");
+
+      const leftColumnCount = Math.ceil(dayCount / 2);
+      const orderedDays = [];
+
+      for (let row = 1; row <= leftColumnCount; row++) {
+        orderedDays.push(row);
+
+        const rightDay = row + leftColumnCount;
+
+        if (rightDay <= dayCount) {
+          orderedDays.push(rightDay);
+        }
+      }
+
+      for (const day of orderedDays) {
+        const row = document.createElement("div");
+        row.className = "month-score-row";
+
+        const label = document.createElement("label");
+        label.setAttribute("for", "month-day-" + day);
+        label.textContent = day;
+
+        const input = document.createElement("input");
+        input.id = "month-day-" + day;
+        input.className = "month-score";
+        input.type = "number";
+        input.min = "1";
+        input.max = "5";
+        input.step = "1";
+        input.placeholder = "1–5";
+        input.dataset.placeholder = "1–5";
+        input.value = loadValue("monthScore." + day, "");
+
+        input.addEventListener("input", function () {
+          saveMonthScore(day, input.value);
+        });
+
+        addPlaceholderFocusBehavior(input);
+
+        row.appendChild(label);
+        row.appendChild(input);
+        grid.appendChild(row);
+      }
+    }
+
+    function openResetPopup() {
+      const title = document.getElementById("resetPopupTitle");
+      const note = document.getElementById("resetPopupNote");
+      const button = document.getElementById("resetConfirmButton");
+
+      if (currentMode === "week") {
+        title.textContent = "Reset Week Summary?";
+        note.textContent = "This will clear the week number, weekly scores, and generated week summary.";
+        button.textContent = "Reset Week Summary";
+      } else {
+        title.textContent = "Reset Month Summary?";
+        note.textContent = "This will clear the selected month, monthly scores, and generated month summary.";
+        button.textContent = "Reset Month Summary";
+      }
+
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("resetPopup").style.display = "block";
+    }
+
+    function closeAllPopups() {
+      document.getElementById("popupOverlay").style.display = "none";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function restorePlaceholder(input) {
+      input.placeholder = input.dataset.placeholder || "";
+    }
+
+    function restoreWeeklyPlaceholders() {
+      restorePlaceholder(document.getElementById("weekNumber"));
+
+      for (const id of weekInputIds) {
+        restorePlaceholder(document.getElementById(id));
+      }
+    }
+
+    function confirmReset() {
+      if (currentMode === "week") {
+        const weekNumberInput = document.getElementById("weekNumber");
+        weekNumberInput.value = "";
+        restorePlaceholder(weekNumberInput);
+        removeSavedValue("weekNumber");
+
+        for (const id of weekInputIds) {
+          const input = document.getElementById(id);
+          input.value = "";
+          restorePlaceholder(input);
+          removeSavedValue("weekScore." + id);
+        }
+
+        restoreWeeklyPlaceholders();
+        clearSavedWeekSummary();
+      } else {
+        document.getElementById("monthSelect").value = "";
+        removeSavedValue("selectedMonth");
+
+        for (let day = 1; day <= 31; day++) {
+          removeSavedValue("monthScore." + day);
+        }
+
+        clearSavedMonthSummary();
+        buildMonthInputs();
+      }
+
+      showCurrentSavedSummary();
+      closeAllPopups();
+    }
+
+    function addPlaceholderFocusBehavior(input) {
+      input.addEventListener("focus", function () {
+        input.placeholder = "";
+      });
+
+      input.addEventListener("blur", function () {
+        if (input.value.trim() === "") {
+          restorePlaceholder(input);
+        }
+      });
+    }
+
+    document.getElementById("weekNumber").addEventListener("input", saveWeekNumber);
+    addPlaceholderFocusBehavior(document.getElementById("weekNumber"));
+
+    for (const id of weekInputIds) {
+      const input = document.getElementById(id);
+
+      input.addEventListener("input", function () {
+        saveWeekScore(id);
+      });
+
+      addPlaceholderFocusBehavior(input);
+    }
+
+    restoreSavedInputs();
+    restoreWeeklyPlaceholders();
+
+    const restoredMonth = document.getElementById("monthSelect").value;
+    if (restoredMonth !== "") {
+      deleteUnavailableMonthScores(monthDayCounts[restoredMonth]);
+    }
+
+    buildMonthInputs();
+
+    const savedMode = loadValue("currentMode", "week");
+    setMode(savedMode === "month" ? "month" : "week");
+  </script>
+</body>
+</html>
