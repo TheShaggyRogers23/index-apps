@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index Month Calendar Generator</title>
+
+  <style>
+    html, body {
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: #141B26;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 22px;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 26px 0 18px 0;
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.85;
+      margin-bottom: 26px;
+      line-height: 1.45;
+    }
+
+    .tool-wrap {
+      max-width: 480px;
+      margin: 0 auto 24px auto;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.06);
+      padding: 18px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .selected-year {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    select {
+      font-size: 20px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: black;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      font-size: 19px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      margin: 6px 0;
+      cursor: pointer;
+      background: white;
+      color: black;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .copy-buttons {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .note {
+      font-size: 15px;
+      opacity: 0.82;
+      margin-top: 12px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    #message {
+      display: none;
+      font-size: 18px;
+      margin-top: 10px;
+      color: #9cff9c;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .error-message {
+      color: #ff8888 !important;
+    }
+
+    .preview-title {
+      max-width: 760px;
+      margin: 24px auto 10px auto;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .preview-wrap {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      background: white;
+      color: black;
+      border-radius: 12px;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .preview-month-title {
+      font-family: monospace;
+      font-size: 17px;
+      text-align: left;
+      padding: 14px 14px 10px 14px;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+      color: black;
+    }
+
+    .preview-placeholder {
+      color: #777;
+    }
+
+    .preview-divider {
+      height: 1px;
+      background: #d0d0d0;
+      width: 100%;
+    }
+
+    textarea {
+      width: 100%;
+      height: 390px;
+      font-size: 15px;
+      border: none;
+      padding: 14px;
+      box-sizing: border-box;
+      resize: vertical;
+      background: white;
+      color: black;
+      line-height: 1.4;
+      font-family: monospace;
+      outline: none;
+      display: block;
+    }
+
+    textarea::placeholder {
+      color: #777;
+      opacity: 1;
+    }
+
+    .reset-wrap {
+      width: 100%;
+      max-width: 760px;
+      margin: 16px auto 0 auto;
+    }
+
+    #popupOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #1f2a38;
+      color: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      z-index: 10;
+      width: 310px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    .popup-title {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .popup-note {
+      font-size: 18px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .popup button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    @media (min-width: 600px) {
+      body {
+        padding: 28px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .copy-buttons {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .preview-month-title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Index Month Calendar Generator</h1>
+
+  <div class="subtitle">
+    Generate formatted monthly Index Score calendar pages.<br>
+    Choose a year and month, then copy the month title and contents.
+  </div>
+
+  <div class="tool-wrap">
+    <div class="card">
+      <div class="card-title">1. Choose Year</div>
+      <div id="selectedYearDisplay" class="selected-year"></div>
+      <button id="yearButton" onclick="openDecadePopup()">Choose Year</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. Choose Month</div>
+      <select id="monthSelect"></select>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3. Generate</div>
+      <button onclick="generateCalendar()">Generate Month</button>
+      <div id="message"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">4. Copy</div>
+
+      <div class="copy-buttons">
+        <button onclick="copySelectedMonthTitle()">Copy Month Title</button>
+        <button onclick="copySelectedMonthContents()">Copy Month Contents</button>
+      </div>
+
+      <div class="note">
+        Create a Notion toggle heading (H3) for the month.<br>
+        Copy the month title into the heading, then paste the month contents inside the toggle.
+      </div>
+    </div>
+  </div>
+
+  <div id="previewTitle" class="preview-title">Preview</div>
+
+  <div class="preview-wrap">
+    <div id="previewMonthTitle" class="preview-month-title preview-placeholder">Month title will appear here.</div>
+    <div class="preview-divider"></div>
+    <textarea id="output" readonly placeholder="Generated calendar will appear here."></textarea>
+  </div>
+
+  <div class="reset-wrap">
+    <button onclick="openResetPopup()">Reset</button>
+  </div>
+
+  <div id="popupOverlay" onclick="closeAllPopups()"></div>
+
+  <div id="decadePopup" class="popup">
+    <div class="popup-title">Choose Decade</div>
+    <div id="decadeList"></div>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <div id="yearPopup" class="popup">
+    <div class="popup-title">Choose Year</div>
+    <div id="yearList"></div>
+    <button onclick="openDecadePopup()">Back to Decades</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <div id="resetPopup" class="popup">
+    <div class="popup-title">Reset?</div>
+    <div class="popup-note">
+      This will clear the selected year, selected month, and generated preview.
+    </div>
+    <button onclick="confirmReset()">Reset</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <script>
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+
+    const monthNamesCaps = [
+      "JANUARY",
+      "FEBRUARY",
+      "MARCH",
+      "APRIL",
+      "MAY",
+      "JUNE",
+      "JULY",
+      "AUGUST",
+      "SEPTEMBER",
+      "OCTOBER",
+      "NOVEMBER",
+      "DECEMBER"
+    ];
+
+    const dayNames = [
+      "Sun",
+      "Mon",
+      "Tues",
+      "Wed",
+      "Thurs",
+      "Fri",
+      "Sat"
+    ];
+
+    let selectedYear = null;
+    let selectedMonth = null;
+
+    let fullYearText = "";
+    let monthTitlesPlain = [];
+    let monthTitlesHtml = [];
+    let monthContentsPlain = [];
+    let monthContentsHtml = [];
+    let monthPreviewTexts = [];
+
+    function setupMonthSelect() {
+      const select = document.getElementById("monthSelect");
+      select.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Choose Month";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      select.appendChild(placeholder);
+
+      for (let i = 0; i < monthNames.length; i++) {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = monthNames[i];
+        select.appendChild(option);
+      }
+
+      select.addEventListener("change", function() {
+        selectedMonth = Number(select.value);
+        clearGeneratedCalendar();
+      });
+    }
+
+    function setupDecadeList() {
+      const decadeList = document.getElementById("decadeList");
+      decadeList.innerHTML = "";
+
+      for (let decade = 2020; decade <= 2090; decade += 10) {
+        const button = document.createElement("button");
+        button.textContent = decade + "s";
+        button.onclick = function() {
+          openYearPopup(decade);
+        };
+        decadeList.appendChild(button);
+      }
+    }
+
+    function openDecadePopup() {
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("decadePopup").style.display = "block";
+      document.getElementById("yearPopup").style.display = "none";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function openYearPopup(decade) {
+      const yearList = document.getElementById("yearList");
+      yearList.innerHTML = "";
+
+      for (let year = decade; year <= decade + 9; year++) {
+        const button = document.createElement("button");
+        button.textContent = year;
+        button.onclick = function() {
+          selectYear(year);
+        };
+        yearList.appendChild(button);
+      }
+
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("decadePopup").style.display = "none";
+      document.getElementById("yearPopup").style.display = "block";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function openResetPopup() {
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("decadePopup").style.display = "none";
+      document.getElementById("yearPopup").style.display = "none";
+      document.getElementById("resetPopup").style.display = "block";
+    }
+
+    function closeAllPopups() {
+      document.getElementById("popupOverlay").style.display = "none";
+      document.getElementById("decadePopup").style.display = "none";
+      document.getElementById("yearPopup").style.display = "none";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function confirmReset() {
+      selectedYear = null;
+      selectedMonth = null;
+
+      document.getElementById("monthSelect").value = "";
+
+      updateSelectedYearDisplay();
+      clearGeneratedCalendar();
+      closeAllPopups();
+    }
+
+    function selectYear(year) {
+      selectedYear = year;
+      updateSelectedYearDisplay();
+      clearGeneratedCalendar();
+      closeAllPopups();
+    }
+
+    function updateSelectedYearDisplay() {
+      const display = document.getElementById("selectedYearDisplay");
+      const button = document.getElementById("yearButton");
+
+      if (selectedYear === null) {
+        display.textContent = "";
+        button.textContent = "Choose Year";
+      } else {
+        display.textContent = "Year: " + selectedYear;
+        button.textContent = "Change Year";
+      }
+    }
+
+    function clearGeneratedCalendar() {
+      fullYearText = "";
+      monthTitlesPlain = [];
+      monthTitlesHtml = [];
+      monthContentsPlain = [];
+      monthContentsHtml = [];
+      monthPreviewTexts = [];
+
+      document.getElementById("output").value = "";
+      document.getElementById("previewTitle").textContent = "Preview";
+
+      const previewMonthTitle = document.getElementById("previewMonthTitle");
+      previewMonthTitle.textContent = "Month title will appear here.";
+      previewMonthTitle.classList.add("preview-placeholder");
+
+      hideMessage();
+    }
+
+    function showMessage(text, isError = false) {
+      const message = document.getElementById("message");
+      message.textContent = text;
+      message.style.display = "block";
+
+      if (isError) {
+        message.classList.add("error-message");
+      } else {
+        message.classList.remove("error-message");
+      }
+    }
+
+    function hideMessage() {
+      const message = document.getElementById("message");
+      message.textContent = "";
+      message.style.display = "none";
+      message.classList.remove("error-message");
+    }
+
+    function twoDigits(number) {
+      return String(number).padStart(2, "0");
+    }
+
+    function getSelectedMonthName() {
+      if (selectedMonth === null) {
+        return "";
+      }
+
+      return monthNames[selectedMonth];
+    }
+
+    function formatDateText(date) {
+      const month = twoDigits(date.getMonth() + 1);
+      const day = twoDigits(date.getDate());
+      const year = twoDigits(date.getFullYear() % 100);
+      const dayName = dayNames[date.getDay()];
+
+      return month + "/" + day + "/" + year + " (" + dayName + ") – ";
+    }
+
+    function formatDateLine(date) {
+      return "- " + formatDateText(date);
+    }
+
+    function makeMonthTitlePlain(year, monthIndex) {
+      return monthNamesCaps[monthIndex] + " " + year;
+    }
+
+    function makeMonthTitleHtml(year, monthIndex) {
+      return "<h1>" + monthNamesCaps[monthIndex] + " " + year + "</h1>";
+    }
+
+    function makeWeekHeaderPlain(weekNumber) {
+      return "**Week " + weekNumber + "**\n";
+    }
+
+    function makeWeekHeaderHtml(weekNumber) {
+      return "<p><strong>Week " + weekNumber + "</strong></p>";
+    }
+
+    function makeWeekSummaryPlainForCopy(weekNumber) {
+      return (
+        "\n" +
+        "Week " + weekNumber + " Average – \n" +
+        "Week " + weekNumber + " Rating – \n" +
+        "Week " + weekNumber + " Quality – \n\n"
+      );
+    }
+
+    function makeWeekSummaryPlainForPreview(weekNumber) {
+      return (
+        "Week " + weekNumber + " Average – \n" +
+        "Week " + weekNumber + " Rating – \n" +
+        "Week " + weekNumber + " Quality – \n\n"
+      );
+    }
+
+    function makeWeekSummaryHtml(weekNumber) {
+      return (
+        "<p>" +
+        "Week " + weekNumber + " Average –<br>" +
+        "Week " + weekNumber + " Rating –<br>" +
+        "Week " + weekNumber + " Quality –" +
+        "</p>"
+      );
+    }
+
+    function makeMonthSummaryPlainForCopy(monthIndex) {
+      const monthName = monthNames[monthIndex];
+
+      return (
+        "\n" +
+        monthName + " Average – \n" +
+        monthName + " Rating – \n" +
+        monthName + " Quality – "
+      );
+    }
+
+    function makeMonthSummaryPlainForPreview(monthIndex) {
+      const monthName = monthNames[monthIndex];
+
+      return (
+        monthName + " Average – \n" +
+        monthName + " Rating – \n" +
+        monthName + " Quality – "
+      );
+    }
+
+    function makeMonthSummaryHtml(monthIndex) {
+      const monthName = monthNames[monthIndex];
+
+      return (
+        "<p>" +
+        monthName + " Average –<br>" +
+        monthName + " Rating –<br>" +
+        monthName + " Quality –" +
+        "</p>"
+      );
+    }
+
+    function isMonday(date) {
+      return date.getDay() === 1;
+    }
+
+    function isSunday(date) {
+      return date.getDay() === 0;
+    }
+
+    function getDaysInMonth(year, monthIndex) {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+
+    function openHtmlListIfNeeded(state) {
+      if (!state.listOpen) {
+        state.html += "<ul>";
+        state.listOpen = true;
+      }
+    }
+
+    function closeHtmlListIfNeeded(state) {
+      if (state.listOpen) {
+        state.html += "</ul>";
+        state.listOpen = false;
+      }
+    }
+
+    function generateMonthContent(year, monthIndex, startingWeekNumber) {
+      let copyPlain = "";
+      let previewPlain = "";
+      let weekNumber = startingWeekNumber;
+
+      const state = {
+        html: "",
+        listOpen: false
+      };
+
+      const daysInMonth = getDaysInMonth(year, monthIndex);
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, monthIndex, day);
+
+        if (isMonday(date)) {
+          closeHtmlListIfNeeded(state);
+
+          copyPlain += makeWeekHeaderPlain(weekNumber);
+          previewPlain += makeWeekHeaderPlain(weekNumber);
+
+          state.html += makeWeekHeaderHtml(weekNumber);
+        }
+
+        copyPlain += formatDateLine(date) + "\n";
+        previewPlain += formatDateLine(date) + "\n";
+
+        openHtmlListIfNeeded(state);
+        state.html += "<li>" + formatDateText(date) + "</li>";
+
+        if (isSunday(date)) {
+          closeHtmlListIfNeeded(state);
+
+          copyPlain += makeWeekSummaryPlainForCopy(weekNumber);
+          previewPlain += makeWeekSummaryPlainForPreview(weekNumber);
+
+          state.html += makeWeekSummaryHtml(weekNumber);
+          weekNumber++;
+        }
+      }
+
+      closeHtmlListIfNeeded(state);
+
+      copyPlain += makeMonthSummaryPlainForCopy(monthIndex);
+      previewPlain = previewPlain.trimEnd() + "\n\n" + makeMonthSummaryPlainForPreview(monthIndex);
+      state.html += makeMonthSummaryHtml(monthIndex);
+
+      return {
+        copyPlain: copyPlain.trimEnd(),
+        previewPlain: previewPlain.trimEnd(),
+        html: state.html,
+        nextWeekNumber: weekNumber
+      };
+    }
+
+    function generateCalendar() {
+      if (selectedYear === null) {
+        showMessage("Choose a year first.", true);
+        return;
+      }
+
+      if (selectedMonth === null) {
+        showMessage("Choose a month first.", true);
+        return;
+      }
+
+      fullYearText = "";
+      monthTitlesPlain = [];
+      monthTitlesHtml = [];
+      monthContentsPlain = [];
+      monthContentsHtml = [];
+      monthPreviewTexts = [];
+
+      let weekNumber = 1;
+
+      for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+        const titlePlain = makeMonthTitlePlain(selectedYear, monthIndex);
+        const titleHtml = makeMonthTitleHtml(selectedYear, monthIndex);
+        const generated = generateMonthContent(selectedYear, monthIndex, weekNumber);
+
+        monthTitlesPlain.push(titlePlain);
+        monthTitlesHtml.push(titleHtml);
+        monthContentsPlain.push(generated.copyPlain);
+        monthContentsHtml.push(generated.html);
+        monthPreviewTexts.push(generated.previewPlain);
+
+        weekNumber = generated.nextWeekNumber;
+      }
+
+      fullYearText = monthPreviewTexts.join("\n\n");
+
+      updateSelectedMonthPreview();
+
+      const output = document.getElementById("output");
+      output.scrollTop = 0;
+
+      updateGeneratedMessage();
+    }
+
+    function updateGeneratedMessage() {
+      showMessage(selectedYear + " " + getSelectedMonthName() + " generated.");
+    }
+
+    function updateSelectedMonthPreview() {
+      if (!fullYearText || selectedMonth === null) {
+        return;
+      }
+
+      const output = document.getElementById("output");
+      const previewMonthTitle = document.getElementById("previewMonthTitle");
+
+      document.getElementById("previewTitle").textContent = "Preview";
+
+      previewMonthTitle.textContent =
+        monthNamesCaps[selectedMonth] + " " + selectedYear;
+
+      previewMonthTitle.classList.remove("preview-placeholder");
+
+      output.value = monthPreviewTexts[selectedMonth];
+      output.scrollTop = 0;
+    }
+
+    function ensureGenerated() {
+      if (!fullYearText) {
+        showMessage("Press Generate Month first.", true);
+        return false;
+      }
+
+      return true;
+    }
+
+    function copyRichText(plainText, htmlText, successMessage) {
+      if (!plainText || !htmlText) {
+        showMessage("Nothing to copy yet.", true);
+        return;
+      }
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        const htmlBlob = new Blob([htmlText], { type: "text/html" });
+        const plainBlob = new Blob([plainText], { type: "text/plain" });
+
+        const item = new ClipboardItem({
+          "text/html": htmlBlob,
+          "text/plain": plainBlob
+        });
+
+        navigator.clipboard.write([item]).then(function() {
+          showMessage(successMessage);
+        }).catch(function() {
+          fallbackCopyPlainText(plainText, successMessage);
+        });
+      } else {
+        fallbackCopyPlainText(plainText, successMessage);
+      }
+    }
+
+    function fallbackCopyPlainText(text, successMessage) {
+      const tempBox = document.createElement("textarea");
+      tempBox.value = text;
+      tempBox.setAttribute("readonly", "");
+      tempBox.style.position = "fixed";
+      tempBox.style.left = "-9999px";
+      tempBox.style.top = "-9999px";
+      tempBox.style.opacity = "0";
+
+      document.body.appendChild(tempBox);
+
+      tempBox.focus();
+      tempBox.select();
+      tempBox.setSelectionRange(0, tempBox.value.length);
+
+      try {
+        document.execCommand("copy");
+        showMessage(successMessage);
+      } catch {
+        showMessage("Copy failed. Select and copy manually.", true);
+      }
+
+      document.body.removeChild(tempBox);
+    }
+
+    function copySelectedMonthTitle() {
+      if (!ensureGenerated()) return;
+
+      copyRichText(
+        monthTitlesPlain[selectedMonth],
+        monthTitlesHtml[selectedMonth],
+        getSelectedMonthName() + " title copied."
+      );
+    }
+
+    function copySelectedMonthContents() {
+      if (!ensureGenerated()) return;
+
+      copyRichText(
+        monthContentsPlain[selectedMonth],
+        monthContentsHtml[selectedMonth],
+        getSelectedMonthName() + " contents copied."
+      );
+    }
+
+    setupMonthSelect();
+    setupDecadeList();
+    updateSelectedYearDisplay();
+    clearGeneratedCalendar();
+  </script>
+</body>
+</html>
