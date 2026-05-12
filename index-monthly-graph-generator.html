@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index Monthly Graph Generator</title>
+
+  <style>
+    html, body {
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: #141B26;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 22px;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 26px 0 18px 0;
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.85;
+      margin-bottom: 26px;
+      line-height: 1.45;
+    }
+
+    .tool-wrap {
+      max-width: 560px;
+      margin: 0 auto 24px auto;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.06);
+      padding: 18px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    input {
+      font-size: 18px;
+      padding: 11px;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: black;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .year-row {
+      margin-bottom: 12px;
+    }
+
+    .month-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+    }
+
+    button {
+      font-size: 19px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      margin: 6px 0;
+      cursor: pointer;
+      background: white;
+      color: black;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #message {
+      display: none;
+      font-size: 18px;
+      margin-top: 10px;
+      color: #9cff9c;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .error-message {
+      color: #ff8888 !important;
+    }
+
+    .preview-title {
+      max-width: 1200px;
+      margin: 24px auto 10px auto;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .canvas-wrap {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #121212;
+      border-radius: 12px;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #121212;
+    }
+
+    .reset-wrap {
+      width: 100%;
+      max-width: 1200px;
+      margin: 16px auto 0 auto;
+    }
+
+    #popupOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #1f2a38;
+      color: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      z-index: 10;
+      width: 310px;
+      box-sizing: border-box;
+    }
+
+    .popup-title {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .popup-note {
+      font-size: 18px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    @media (min-width: 700px) {
+      body {
+        padding: 28px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Index Monthly Graph Generator</h1>
+
+  <div class="subtitle">
+    Generate monthly Index Score graphs.<br>
+    Enter a year and monthly averages, then download the chart.
+  </div>
+
+  <div class="tool-wrap">
+    <div class="card">
+      <div class="card-title">1. Enter Data</div>
+
+      <div class="year-row">
+        <label for="yearInput">Year</label>
+        <input id="yearInput" type="text" placeholder="Optional">
+      </div>
+
+      <div class="month-grid">
+        <div>
+          <label for="janInput">Jan</label>
+          <input id="janInput" type="text">
+        </div>
+
+        <div>
+          <label for="julInput">Jul</label>
+          <input id="julInput" type="text">
+        </div>
+
+        <div>
+          <label for="febInput">Feb</label>
+          <input id="febInput" type="text">
+        </div>
+
+        <div>
+          <label for="augInput">Aug</label>
+          <input id="augInput" type="text">
+        </div>
+
+        <div>
+          <label for="marInput">Mar</label>
+          <input id="marInput" type="text">
+        </div>
+
+        <div>
+          <label for="sepInput">Sep</label>
+          <input id="sepInput" type="text">
+        </div>
+
+        <div>
+          <label for="aprInput">Apr</label>
+          <input id="aprInput" type="text">
+        </div>
+
+        <div>
+          <label for="octInput">Oct</label>
+          <input id="octInput" type="text">
+        </div>
+
+        <div>
+          <label for="mayInput">May</label>
+          <input id="mayInput" type="text">
+        </div>
+
+        <div>
+          <label for="novInput">Nov</label>
+          <input id="novInput" type="text">
+        </div>
+
+        <div>
+          <label for="junInput">Jun</label>
+          <input id="junInput" type="text">
+        </div>
+
+        <div>
+          <label for="decInput">Dec</label>
+          <input id="decInput" type="text">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. Generate</div>
+      <button onclick="generateGraph()">Generate Graph</button>
+      <div id="message"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3. Export</div>
+      <button onclick="downloadPng()">Download PNG</button>
+    </div>
+  </div>
+
+  <div class="preview-title">Preview</div>
+
+  <div class="canvas-wrap">
+    <canvas id="graphCanvas" width="1200" height="600"></canvas>
+  </div>
+
+  <div class="reset-wrap">
+    <button onclick="openResetPopup()">Reset</button>
+  </div>
+
+  <div id="popupOverlay" onclick="closeAllPopups()"></div>
+
+  <div id="resetPopup" class="popup">
+    <div class="popup-title">Reset?</div>
+    <div class="popup-note">
+      This will clear the year, monthly values, and generated graph.
+    </div>
+    <button onclick="confirmReset()">Reset</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("graphCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const width = 1200;
+    const height = 600;
+
+    const margins = {
+      left: 115,
+      top: 55,
+      bottom: 85
+    };
+
+    const fontSizes = {
+      title: 32,
+      tick: 25,
+      axis: 24,
+      band: 25,
+      point: 22
+    };
+
+    const visualBalance = {
+      bandLabelGap: 10,
+      minimumRightPadding: 10
+    };
+
+    let plot = {
+      x: margins.left,
+      y: margins.top,
+      width: 940,
+      height: height - margins.top - margins.bottom
+    };
+
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    const inputIds = [
+      "janInput", "febInput", "marInput", "aprInput", "mayInput", "junInput",
+      "julInput", "augInput", "sepInput", "octInput", "novInput", "decInput"
+    ];
+
+    const bands = [
+      { label: "Very Poor", min: 1, max: 1.5, color: "#b94a48" },
+      { label: "Poor", min: 1.5, max: 2.5, color: "#c97a2b" },
+      { label: "Mixed", min: 2.5, max: 3.5, color: "#d8c84c" },
+      { label: "Good", min: 3.5, max: 4.5, color: "#4f8f4f" },
+      { label: "Excellent", min: 4.5, max: 5, color: "#4a79a8" }
+    ];
+
+    let graphGenerated = false;
+
+    function getFont(size) {
+      return size + "px 'DejaVu Sans', Arial, sans-serif";
+    }
+
+    function measureMaxBandLabelWidth() {
+      ctx.save();
+      ctx.font = getFont(fontSizes.band);
+
+      let maxWidth = 0;
+
+      for (const band of bands) {
+        maxWidth = Math.max(maxWidth, ctx.measureText(band.label).width);
+      }
+
+      ctx.restore();
+      return maxWidth;
+    }
+
+    function measureMaxYTickWidth() {
+      ctx.save();
+      ctx.font = getFont(fontSizes.tick);
+
+      const ticks = ["1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5"];
+      let maxWidth = 0;
+
+      for (const tick of ticks) {
+        maxWidth = Math.max(maxWidth, ctx.measureText(tick).width);
+      }
+
+      ctx.restore();
+      return maxWidth;
+    }
+
+    function getLeftVisualPadding() {
+      const yAxisTickLeft = margins.left - 14 - measureMaxYTickWidth();
+      const yAxisLabelCenterX = yAxisTickLeft / 2;
+      const estimatedRotatedAxisLabelLeftEdge = yAxisLabelCenterX - (fontSizes.axis / 2);
+
+      return Math.max(visualBalance.minimumRightPadding, estimatedRotatedAxisLabelLeftEdge);
+    }
+
+    function updatePlotLayout() {
+      const leftVisualPadding = getLeftVisualPadding();
+      const maxBandLabelWidth = measureMaxBandLabelWidth();
+
+      const rightMargin =
+        visualBalance.bandLabelGap +
+        maxBandLabelWidth +
+        leftVisualPadding;
+
+      plot = {
+        x: margins.left,
+        y: margins.top,
+        width: width - margins.left - rightMargin,
+        height: height - margins.top - margins.bottom
+      };
+    }
+
+    function xToPixel(monthIndex) {
+      const xValue = monthIndex + 1;
+      return plot.x + ((xValue - 0.5) / 12) * plot.width;
+    }
+
+    function yToPixel(value) {
+      return plot.y + ((5 - value) / 4) * plot.height;
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#121212";
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    function showMessage(text, isError = false) {
+      const message = document.getElementById("message");
+      message.textContent = text;
+      message.style.display = "block";
+
+      if (isError) {
+        message.classList.add("error-message");
+      } else {
+        message.classList.remove("error-message");
+      }
+    }
+
+    function hideMessage() {
+      const message = document.getElementById("message");
+      message.textContent = "";
+      message.style.display = "none";
+      message.classList.remove("error-message");
+    }
+
+    function truncateToTwoDecimalString(raw) {
+      const trimmed = raw.trim();
+
+      if (!trimmed.includes(".")) {
+        return trimmed;
+      }
+
+      const parts = trimmed.split(".");
+      const whole = parts[0];
+      const decimals = parts[1].slice(0, 2);
+
+      return whole + "." + decimals;
+    }
+
+    function parseInputs() {
+      const values = [];
+
+      for (let i = 0; i < inputIds.length; i++) {
+        const input = document.getElementById(inputIds[i]);
+        const raw = input.value.trim();
+
+        if (raw === "") {
+          values.push(null);
+          continue;
+        }
+
+        if (!/^-?\d+(\.\d+)?$/.test(raw)) {
+          return { error: true };
+        }
+
+        const numericValue = Number(raw);
+
+        if (!Number.isFinite(numericValue) || numericValue < 1 || numericValue > 5) {
+          return { error: true };
+        }
+
+        values.push({
+          value: numericValue,
+          label: truncateToTwoDecimalString(raw)
+        });
+      }
+
+      return {
+        error: false,
+        values
+      };
+    }
+
+    function getYearText() {
+      return document.getElementById("yearInput").value.trim();
+    }
+
+    function drawBackgroundBands() {
+      for (const band of bands) {
+        const yTop = yToPixel(band.max);
+        const yBottom = yToPixel(band.min);
+
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = band.color;
+        ctx.fillRect(plot.x, yTop, plot.width, yBottom - yTop);
+        ctx.restore();
+      }
+    }
+
+    function drawPlotBorder() {
+      ctx.save();
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(plot.x, plot.y, plot.width, plot.height);
+      ctx.restore();
+    }
+
+    function drawTicksAndLabels() {
+      ctx.save();
+      ctx.strokeStyle = "white";
+      ctx.fillStyle = "white";
+      ctx.lineWidth = 1.2;
+      ctx.font = getFont(fontSizes.tick);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+
+      for (let i = 0; i < months.length; i++) {
+        const x = xToPixel(i);
+
+        ctx.beginPath();
+        ctx.moveTo(x, plot.y + plot.height);
+        ctx.lineTo(x, plot.y + plot.height + 5);
+        ctx.stroke();
+
+        ctx.fillText(months[i], x, plot.y + plot.height + 12);
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+
+      const yMajorTicks = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+
+      for (const tick of yMajorTicks) {
+        const y = yToPixel(tick);
+
+        ctx.beginPath();
+        ctx.moveTo(plot.x, y);
+        ctx.lineTo(plot.x - 5, y);
+        ctx.stroke();
+
+        ctx.fillText(String(tick), plot.x - 14, y);
+      }
+
+      for (let raw = 10; raw <= 50; raw++) {
+        const value = raw / 10;
+
+        if (yMajorTicks.includes(value)) {
+          continue;
+        }
+
+        const y = yToPixel(value);
+
+        ctx.beginPath();
+        ctx.moveTo(plot.x, y);
+        ctx.lineTo(plot.x - 3, y);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawTitle(yearText) {
+      const title = yearText
+        ? yearText + " Monthly Index Scores"
+        : "[YEAR] Monthly Index Scores";
+
+      ctx.save();
+      ctx.fillStyle = "white";
+      ctx.font = getFont(fontSizes.title);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      const x = plot.x + plot.width / 2;
+      const y = plot.y / 2;
+
+      ctx.fillText(title, x, y);
+      ctx.restore();
+    }
+
+    function drawAxisLabels() {
+      ctx.save();
+      ctx.fillStyle = "white";
+      ctx.font = getFont(fontSizes.axis);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      const xAxisTickLabelTop = plot.y + plot.height + 12;
+      const xAxisTickLabelBottom = xAxisTickLabelTop + fontSizes.tick;
+      const xAxisLabelY = (height + xAxisTickLabelBottom) / 2;
+
+      ctx.fillText("Months", plot.x + plot.width / 2, xAxisLabelY);
+
+      const yAxisTickLeft = plot.x - 14 - measureMaxYTickWidth();
+      const yAxisLabelX = yAxisTickLeft / 2;
+
+      ctx.save();
+      ctx.translate(yAxisLabelX, plot.y + plot.height / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("Monthly Averages (1–5)", 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function drawRightBandLabels() {
+      ctx.save();
+      ctx.fillStyle = "white";
+      ctx.font = getFont(fontSizes.band);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+
+      for (const band of bands) {
+        const centerValue = (band.min + band.max) / 2;
+        const x = plot.x + plot.width + visualBalance.bandLabelGap;
+        const y = yToPixel(centerValue);
+
+        ctx.fillText(band.label, x, y);
+      }
+
+      ctx.restore();
+    }
+
+    function drawData(values) {
+      ctx.save();
+
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      let activeSegment = false;
+
+      for (let i = 0; i < values.length; i++) {
+        const item = values[i];
+
+        if (item === null) {
+          if (activeSegment) {
+            ctx.stroke();
+            activeSegment = false;
+          }
+
+          continue;
+        }
+
+        const x = xToPixel(i);
+        const y = yToPixel(item.value);
+
+        if (!activeSegment) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          activeSegment = true;
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+
+      if (activeSegment) {
+        ctx.stroke();
+      }
+
+      for (let i = 0; i < values.length; i++) {
+        const item = values[i];
+
+        if (item === null) {
+          continue;
+        }
+
+        const x = xToPixel(i);
+        const y = yToPixel(item.value);
+
+        ctx.beginPath();
+        ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = "black";
+        ctx.stroke();
+      }
+
+      drawPointLabels(values);
+
+      ctx.restore();
+    }
+
+    function drawPointLabels(values) {
+      ctx.save();
+      ctx.font = getFont(fontSizes.point);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "black";
+      ctx.fillStyle = "white";
+
+      for (let i = 0; i < values.length; i++) {
+        const item = values[i];
+
+        if (item === null) {
+          continue;
+        }
+
+        const x = xToPixel(i);
+        const y = yToPixel(item.value);
+
+        let labelY;
+
+        if (item.value >= 4.8) {
+          labelY = y + 26;
+        } else {
+          labelY = y - 26;
+        }
+
+        labelY = Math.max(plot.y + 16, Math.min(plot.y + plot.height - 16, labelY));
+
+        ctx.strokeText(item.label, x, labelY);
+        ctx.fillText(item.label, x, labelY);
+      }
+
+      ctx.restore();
+    }
+
+    function generateGraph() {
+      const parsed = parseInputs();
+
+      if (parsed.error) {
+        clearCanvas();
+        graphGenerated = false;
+        showMessage("Error: Values must be between 1 and 5.", true);
+        return;
+      }
+
+      const yearText = getYearText();
+
+      updatePlotLayout();
+
+      clearCanvas();
+      drawBackgroundBands();
+      drawPlotBorder();
+      drawTicksAndLabels();
+      drawTitle(yearText);
+      drawAxisLabels();
+      drawRightBandLabels();
+      drawData(parsed.values);
+
+      graphGenerated = true;
+      showMessage("Graph generated.");
+    }
+
+    function downloadPng() {
+      if (!graphGenerated) {
+        showMessage("Generate graph first.", true);
+        return;
+      }
+
+      const yearText = getYearText();
+      const fileYear = yearText || "year";
+      const fileName = "index-monthly-scores-" + fileYear + ".png";
+
+      canvas.toBlob(function(blob) {
+        if (!blob) {
+          showMessage("Download failed.", true);
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(function() {
+          URL.revokeObjectURL(url);
+        }, 1000);
+      }, "image/png");
+    }
+
+    function openResetPopup() {
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("resetPopup").style.display = "block";
+    }
+
+    function closeAllPopups() {
+      document.getElementById("popupOverlay").style.display = "none";
+      document.getElementById("resetPopup").style.display = "none";
+    }
+
+    function confirmReset() {
+      document.getElementById("yearInput").value = "";
+
+      for (const id of inputIds) {
+        document.getElementById(id).value = "";
+      }
+
+      clearCanvas();
+      graphGenerated = false;
+      hideMessage();
+      closeAllPopups();
+    }
+
+    updatePlotLayout();
+    clearCanvas();
+  </script>
+</body>
+</html>
