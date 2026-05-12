@@ -234,7 +234,7 @@
   <h1>Index Week Calendar Generator</h1>
 
   <div class="subtitle">
-    Generate formatted weekly Index Score calendar ranges.<br>
+    Generate weekly Index Score calendar ranges.<br>
     Choose a year, then copy the week ranges for each weekly graph.
   </div>
 
@@ -622,6 +622,20 @@
       }
     }
 
+    function buildFullPreviewText() {
+      const sections = [];
+
+      for (let graphNumber = 1; graphNumber <= 4; graphNumber++) {
+        const graphText = graphPlainTexts[graphNumber];
+
+        if (graphText) {
+          sections.push("Graph " + graphNumber + "\n" + graphText);
+        }
+      }
+
+      return sections.join("\n\n");
+    }
+
     function generateCalendar() {
       if (selectedYear === null) {
         showMessage("Choose a year first.", true);
@@ -630,10 +644,7 @@
 
       generatedWeeks = buildGeneratedWeeks(selectedYear);
       buildGraphTexts();
-
-      fullPreviewText = generatedWeeks.map(function(entry) {
-        return entry.line;
-      }).join("\n");
+      fullPreviewText = buildFullPreviewText();
 
       updatePreview();
 
