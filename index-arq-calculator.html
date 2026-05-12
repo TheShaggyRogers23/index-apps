@@ -74,6 +74,11 @@
       font-size: 20px;
     }
 
+    .month-select-row {
+      max-width: 430px;
+      margin: 0 auto 28px auto;
+    }
+
     input,
     select {
       font-size: 20px;
@@ -276,6 +281,10 @@
         font-size: 20px;
       }
 
+      .month-select-row {
+        max-width: 430px;
+      }
+
       .score-grid {
         max-width: 430px;
       }
@@ -368,8 +377,7 @@
     </section>
 
     <section id="monthPanel" class="hidden">
-      <div class="control-row">
-        <label for="monthSelect">Month</label>
+      <div class="month-select-row">
         <select id="monthSelect" onchange="handleMonthChange()">
           <option value="">Select Month</option>
           <option value="January">January</option>
