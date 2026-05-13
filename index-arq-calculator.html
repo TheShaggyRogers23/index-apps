@@ -372,7 +372,7 @@
       </div>
 
       <div class="generate-area">
-        <button id="weekQualityDisplayButton" onclick="openQualityDisplayPopup()">Quality Display</button>
+        <button id="weekQualityDisplayButton" onclick="openQualityDisplayPopup()">Display: Tiers</button>
         <button onclick="generateSummary()">Generate Week Summary</button>
       </div>
     </section>
@@ -401,7 +401,7 @@
       <div id="monthScoreGrid" class="month-score-grid"></div>
 
       <div class="generate-area">
-        <button id="monthQualityDisplayButton" onclick="openQualityDisplayPopup()">Quality Display</button>
+        <button id="monthQualityDisplayButton" onclick="openQualityDisplayPopup()">Display: Tiers</button>
         <button onclick="generateSummary()">Generate Month Summary</button>
       </div>
     </section>
@@ -541,18 +541,18 @@
       display = normalizeQualityDisplay(display);
 
       if (display === "grades") {
-        return "Letter Grades";
+        return "Grades";
       }
 
       if (display === "both") {
-        return "Quality Tiers + Letter Grades";
+        return "Tiers + Grades";
       }
 
-      return "Quality Tiers";
+      return "Tiers";
     }
 
     function updateQualityDisplayButtons() {
-      const label = "Quality Display: " + getQualityDisplayLabel(qualityDisplay);
+      const label = "Display: " + getQualityDisplayLabel(qualityDisplay);
 
       document.getElementById("weekQualityDisplayButton").textContent = label;
       document.getElementById("monthQualityDisplayButton").textContent = label;
