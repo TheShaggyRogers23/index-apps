@@ -31,7 +31,13 @@
     #average {
       font-size: 70px;
       font-weight: bold;
-      margin: 30px;
+      margin: 30px 30px 10px 30px;
+    }
+
+    #modeIndicator {
+      font-size: 22px;
+      margin-bottom: 30px;
+      min-height: 28px;
     }
 
     input {
@@ -160,6 +166,7 @@
 </div>
 
 <div id="average"></div>
+<div id="modeIndicator"></div>
 
 <input id="answer" placeholder="Your answer">
 
@@ -170,7 +177,8 @@
 <div id="result"></div>
 
 <div>
-  <button id="scaleButton" onclick="toggleScale()">Show Scale</button>
+  <button id="scaleButton" onclick="toggleScale()">Show Scales</button>
+  <button id="modeButton" onclick="openModePopup()">Mode</button>
   <button onclick="openResetPopup()">Reset</button>
 </div>
 
@@ -180,7 +188,7 @@
 </div>
 
 <div id="scale">
-  <b>Scale Reference</b><br><br>
+  <b>Quality Tiers</b><br><br>
 
   <b><span style="color:#f44336;">■</span> Very Poor:</b><br>
   1.00–1.24 = <span style="color:#f44336;">■</span> Very Poor I (11)<br>
@@ -206,19 +214,63 @@
 
   <b><span style="color:#2196f3;">■</span> Excellent:</b><br>
   4.50–4.74 = <span style="color:#2196f3;">■</span> Excellent I (51)<br>
-  4.75–5.00 = <span style="color:#2196f3;">■</span> Excellent II (52)
+  4.75–5.00 = <span style="color:#2196f3;">■</span> Excellent II (52)<br><br>
+
+  <b>Letter Grades</b><br><br>
+
+  <b><span style="color:#f44336;">■</span> Very Poor:</b><br>
+  1.00–1.24 = <span style="color:#f44336;">■</span> F<br>
+  1.25–1.49 = <span style="color:#f44336;">■</span> F<br><br>
+
+  <b><span style="color:#ff9800;">■</span> Poor:</b><br>
+  1.50–1.74 = <span style="color:#ff9800;">■</span> D-<br>
+  1.75–1.99 = <span style="color:#ff9800;">■</span> D<br>
+  2.00–2.24 = <span style="color:#ff9800;">■</span> D+<br>
+  2.25–2.49 = <span style="color:#ff9800;">■</span> C-<br><br>
+
+  <b><span style="color:#ffcc33;">■</span> Mixed:</b><br>
+  2.50–2.74 = <span style="color:#ffcc33;">■</span> C<br>
+  2.75–2.99 = <span style="color:#ffcc33;">■</span> C+<br>
+  3.00–3.24 = <span style="color:#ffcc33;">■</span> B-<br>
+  3.25–3.49 = <span style="color:#ffcc33;">■</span> B<br><br>
+
+  <b><span style="color:#8bc34a;">■</span> Good:</b><br>
+  3.50–3.74 = <span style="color:#8bc34a;">■</span> B+<br>
+  3.75–3.99 = <span style="color:#8bc34a;">■</span> A-<br>
+  4.00–4.24 = <span style="color:#8bc34a;">■</span> A<br>
+  4.25–4.49 = <span style="color:#8bc34a;">■</span> A+<br><br>
+
+  <b><span style="color:#2196f3;">■</span> Excellent:</b><br>
+  4.50–4.74 = <span style="color:#2196f3;">■</span> A++<br>
+  4.75–5.00 = <span style="color:#2196f3;">■</span> A+++
 </div>
 
 <div id="answerFormat">
   <b>Answer format</b><br><br>
-  Examples of approved formats:<br><br>
+
+  <b>Quality Tiers:</b><br>
   43<br>
   Good III<br>
   Good 3<br><br>
+
+  <b>Letter Grades:</b><br>
+  A+<br>
+  a+<br>
+  A +<br><br>
+
   Spaces and capitalization do not matter.
 </div>
 
 <div id="popupOverlay" onclick="closeAllPopups()"></div>
+
+<div id="modePopup" class="popup">
+  <div class="popup-title">Training Mode</div>
+  <div class="popup-note">Choose what kind of answer QT asks for.</div>
+  <button onclick="setTrainingMode('tiers')">Quality Tiers</button>
+  <button onclick="setTrainingMode('grades')">Letter Grades</button>
+  <button onclick="setTrainingMode('random')">Random Mix</button>
+  <button onclick="closeAllPopups()">Cancel</button>
+</div>
 
 <div id="themePopup" class="popup">
   <div class="popup-title">Choose theme</div>
@@ -273,60 +325,27 @@
 
 <script>
 const ranges = [
-  [1.00,1.24,"11","Very Poor I"],
-  [1.25,1.49,"12","Very Poor II"],
-  [1.50,1.74,"21","Poor I"],
-  [1.75,1.99,"22","Poor II"],
-  [2.00,2.24,"23","Poor III"],
-  [2.25,2.49,"24","Poor IV"],
-  [2.50,2.74,"31","Mixed I"],
-  [2.75,2.99,"32","Mixed II"],
-  [3.00,3.24,"33","Mixed III"],
-  [3.25,3.49,"34","Mixed IV"],
-  [3.50,3.74,"41","Good I"],
-  [3.75,3.99,"42","Good II"],
-  [4.00,4.24,"43","Good III"],
-  [4.25,4.49,"44","Good IV"],
-  [4.50,4.74,"51","Excellent I"],
-  [4.75,5.00,"52","Excellent II"]
+  [1.00,1.24,"11","Very Poor I","F"],
+  [1.25,1.49,"12","Very Poor II","F"],
+  [1.50,1.74,"21","Poor I","D-"],
+  [1.75,1.99,"22","Poor II","D"],
+  [2.00,2.24,"23","Poor III","D+"],
+  [2.25,2.49,"24","Poor IV","C-"],
+  [2.50,2.74,"31","Mixed I","C"],
+  [2.75,2.99,"32","Mixed II","C+"],
+  [3.00,3.24,"33","Mixed III","B-"],
+  [3.25,3.49,"34","Mixed IV","B"],
+  [3.50,3.74,"41","Good I","B+"],
+  [3.75,3.99,"42","Good II","A-"],
+  [4.00,4.24,"43","Good III","A"],
+  [4.25,4.49,"44","Good IV","A+"],
+  [4.50,4.74,"51","Excellent I","A++"],
+  [4.75,5.00,"52","Excellent II","A+++"]
 ];
-
-const categoryWords = {
-  "verypoor": "1",
-  "poor": "2",
-  "mixed": "3",
-  "good": "4",
-  "excellent": "5"
-};
-
-const tierWords = {
-  "i": "1",
-  "ii": "2",
-  "iii": "3",
-  "iv": "4",
-  "1": "1",
-  "2": "2",
-  "3": "3",
-  "4": "4"
-};
-
-const validAnswers = [];
-
-for (const range of ranges) {
-  validAnswers.push(range[2]);
-  validAnswers.push(range[3].toLowerCase().replace(/\s/g,""));
-
-  const labelParts = range[3].toLowerCase().split(" ");
-  const tierRoman = labelParts[labelParts.length - 1];
-  const categoryLabel = labelParts.slice(0, -1).join("");
-
-  if (categoryWords[categoryLabel] && tierWords[tierRoman]) {
-    validAnswers.push(categoryWords[categoryLabel] + tierWords[tierRoman]);
-  }
-}
 
 let currentAverage;
 let currentCorrect;
+let currentPromptType = "tiers";
 let tierBag = [];
 
 let played = 0;
@@ -337,6 +356,7 @@ let lastStreak = 0;
 let bestStreak = 0;
 let answerLocked = false;
 let currentTheme = normalizeTheme(localStorage.getItem("qtTheme") || "classic");
+let trainingMode = normalizeTrainingMode(localStorage.getItem("qtTrainingMode") || "tiers");
 
 function normalizeTheme(theme) {
   if (theme === "default") {
@@ -348,6 +368,14 @@ function normalizeTheme(theme) {
   }
 
   return "classic";
+}
+
+function normalizeTrainingMode(mode) {
+  if (mode === "tiers" || mode === "grades" || mode === "random") {
+    return mode;
+  }
+
+  return "tiers";
 }
 
 function getRangeByCode(code) {
@@ -377,11 +405,83 @@ function getThemeFromCode(code) {
     return "light";
   }
 
-  if (code === "d") {
+  if (code === "d" || code === "c") {
     return "classic";
   }
 
   return "classic";
+}
+
+function getModeCode(mode) {
+  mode = normalizeTrainingMode(mode);
+
+  if (mode === "grades") {
+    return "g";
+  }
+
+  if (mode === "random") {
+    return "r";
+  }
+
+  return "t";
+}
+
+function getModeFromCode(code) {
+  if (code === "g") {
+    return "grades";
+  }
+
+  if (code === "r") {
+    return "random";
+  }
+
+  return "tiers";
+}
+
+function getPromptCode(promptType) {
+  if (promptType === "grades") {
+    return "g";
+  }
+
+  return "t";
+}
+
+function getPromptFromCode(code) {
+  if (code === "g") {
+    return "grades";
+  }
+
+  return "tiers";
+}
+
+function getModeLabel(mode) {
+  mode = normalizeTrainingMode(mode);
+
+  if (mode === "grades") {
+    return "Letter Grades";
+  }
+
+  if (mode === "random") {
+    return "Random Mix";
+  }
+
+  return "Quality Tiers";
+}
+
+function getPromptLabel(promptType) {
+  if (promptType === "grades") {
+    return "Letter Grade";
+  }
+
+  return "Quality Tier";
+}
+
+function getCorrectAnswerText(range, promptType) {
+  if (promptType === "grades") {
+    return range[4];
+  }
+
+  return range[2] + " (" + range[3] + ")";
 }
 
 function loadStats() {
@@ -414,18 +514,21 @@ function clearSavedStats() {
 function saveQuestionState() {
   localStorage.setItem("qtCurrentAverage", currentAverage.toFixed(2));
   localStorage.setItem("qtCurrentCorrectCode", currentCorrect[2]);
+  localStorage.setItem("qtCurrentPromptType", currentPromptType);
   localStorage.setItem("qtTierBagCodes", JSON.stringify(tierBag.map(range => range[2])));
 }
 
 function clearQuestionState() {
   localStorage.removeItem("qtCurrentAverage");
   localStorage.removeItem("qtCurrentCorrectCode");
+  localStorage.removeItem("qtCurrentPromptType");
   localStorage.removeItem("qtTierBagCodes");
 }
 
 function loadQuestionState() {
   const savedAverage = Number(localStorage.getItem("qtCurrentAverage"));
   const savedCorrectCode = localStorage.getItem("qtCurrentCorrectCode");
+  const savedPromptType = localStorage.getItem("qtCurrentPromptType") || "tiers";
   const savedTierBagCodes = localStorage.getItem("qtTierBagCodes");
   const savedCorrect = getRangeByCode(savedCorrectCode);
 
@@ -444,10 +547,12 @@ function loadQuestionState() {
 
     currentAverage = savedAverage;
     currentCorrect = savedCorrect;
+    currentPromptType = savedPromptType === "grades" ? "grades" : "tiers";
     tierBag = restoredBag;
 
     document.getElementById("average").innerText = currentAverage.toFixed(2);
     document.getElementById("answer").value = "";
+    updateModeDisplay();
 
     return true;
   } catch {
@@ -479,6 +584,18 @@ function randomAverageFromRange(range) {
   return value / 100;
 }
 
+function choosePromptType() {
+  if (trainingMode === "grades") {
+    return "grades";
+  }
+
+  if (trainingMode === "random") {
+    return Math.random() < 0.5 ? "tiers" : "grades";
+  }
+
+  return "tiers";
+}
+
 function updateStats() {
   const accuracy = played === 0 ? 0 : Math.round((correct / played) * 100);
 
@@ -490,6 +607,36 @@ function updateStats() {
     "Streak: " + streak +
     " | Last Streak: " + lastStreak +
     " | Best Streak: " + bestStreak;
+}
+
+function updateModeDisplay() {
+  document.getElementById("modeButton").innerText = "Mode: " + getModeLabel(trainingMode);
+
+  if (trainingMode === "random") {
+    document.getElementById("modeIndicator").innerText =
+      "Answer with: " + getPromptLabel(currentPromptType);
+  } else {
+    document.getElementById("modeIndicator").innerText =
+      "Answer with: " + getModeLabel(trainingMode);
+  }
+}
+
+function openModePopup() {
+  document.getElementById("popupOverlay").style.display = "block";
+  document.getElementById("modePopup").style.display = "block";
+}
+
+function setTrainingMode(mode) {
+  trainingMode = normalizeTrainingMode(mode);
+  localStorage.setItem("qtTrainingMode", trainingMode);
+
+  answerLocked = false;
+  clearQuestionState();
+  document.getElementById("result").innerHTML = "";
+
+  newAverage(false);
+  updateModeDisplay();
+  closeAllPopups();
 }
 
 function openResetPopup() {
@@ -526,10 +673,12 @@ function newAverage(shouldFocus = true) {
 
   currentCorrect = tierBag.pop();
   currentAverage = randomAverageFromRange(currentCorrect);
+  currentPromptType = choosePromptType();
 
   const input = document.getElementById("answer");
 
   document.getElementById("average").innerText = currentAverage.toFixed(2);
+  updateModeDisplay();
 
   input.value = "";
   input.style.opacity = "0.6";
@@ -545,7 +694,7 @@ function newAverage(shouldFocus = true) {
   saveQuestionState();
 }
 
-function normalizeAnswer(raw) {
+function normalizeTierAnswer(raw) {
   let answer = raw.trim().toLowerCase().replace(/\s/g,"");
 
   if (answer.startsWith("verypoor")) {
@@ -569,13 +718,39 @@ function normalizeAnswer(raw) {
   return answer;
 }
 
+function normalizeGradeAnswer(raw) {
+  return raw.trim().toUpperCase().replace(/\s/g,"");
+}
+
+function isValidTierAnswer(answer) {
+  for (const range of ranges) {
+    const accepted = [
+      range[2],
+      range[3].toLowerCase().replace(/\s/g,"")
+    ];
+
+    const acceptedNormalized = accepted.map(value => normalizeTierAnswer(value));
+
+    if (acceptedNormalized.includes(answer)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isValidGradeAnswer(answer) {
+  const validGrades = ranges.map(range => range[4]);
+
+  return validGrades.includes(answer);
+}
+
 function checkAnswer() {
   if (answerLocked) {
     return;
   }
 
   const raw = document.getElementById("answer").value.trim();
-  const answer = normalizeAnswer(raw);
   const result = document.getElementById("result");
 
   if (raw === "") {
@@ -583,23 +758,37 @@ function checkAnswer() {
     return;
   }
 
-  if (!validAnswers.includes(answer)) {
+  let isValid = false;
+  let isCorrect = false;
+
+  if (currentPromptType === "grades") {
+    const answer = normalizeGradeAnswer(raw);
+    const correctAnswer = normalizeGradeAnswer(currentCorrect[4]);
+
+    isValid = isValidGradeAnswer(answer);
+    isCorrect = answer === correctAnswer;
+  } else {
+    const answer = normalizeTierAnswer(raw);
+    const accepted = [
+      currentCorrect[2],
+      currentCorrect[3].toLowerCase().replace(/\s/g,"")
+    ];
+
+    const acceptedNormalized = accepted.map(value => normalizeTierAnswer(value));
+
+    isValid = isValidTierAnswer(answer);
+    isCorrect = acceptedNormalized.includes(answer);
+  }
+
+  if (!isValid) {
     result.innerHTML = "Invalid answer.";
     return;
   }
 
   answerLocked = true;
-
-  const accepted = [
-    currentCorrect[2],
-    currentCorrect[3].toLowerCase().replace(/\s/g,"")
-  ];
-
-  const acceptedNormalized = accepted.map(a => normalizeAnswer(a));
-
   played++;
 
-  if (acceptedNormalized.includes(answer)) {
+  if (isCorrect) {
     correct++;
     streak++;
 
@@ -617,7 +806,7 @@ function checkAnswer() {
       "Wrong ❌<br>" +
       "Average missed: " + currentAverage.toFixed(2) + "<br>" +
       "Your answer: " + raw + "<br>" +
-      "Correct answer: " + currentCorrect[2] + " (" + currentCorrect[3] + ")";
+      "Correct answer: " + getCorrectAnswerText(currentCorrect, currentPromptType);
   }
 
   updateStats();
@@ -637,10 +826,10 @@ function toggleScale() {
 
   if (isHidden) {
     scale.style.display = "block";
-    button.innerText = "Close Scale";
+    button.innerText = "Close Scales";
   } else {
     scale.style.display = "none";
-    button.innerText = "Show Scale";
+    button.innerText = "Show Scales";
   }
 }
 
@@ -656,6 +845,7 @@ function openDataPopup() {
 
 function closeAllPopups() {
   document.getElementById("popupOverlay").style.display = "none";
+  document.getElementById("modePopup").style.display = "none";
   document.getElementById("themePopup").style.display = "none";
   document.getElementById("resetPopup").style.display = "none";
   document.getElementById("dataPopup").style.display = "none";
@@ -778,7 +968,7 @@ function makeChecksum(text) {
 
 function createBackupCode() {
   const data = {
-    v: 1,
+    v: 2,
     p: played,
     c: correct,
     w: wrong,
@@ -786,6 +976,8 @@ function createBackupCode() {
     l: lastStreak,
     b: bestStreak,
     t: getThemeCode(currentTheme),
+    m: getModeCode(trainingMode),
+    q: getPromptCode(currentPromptType),
     a: currentAverage,
     r: currentCorrect[2],
     g: tierBag.map(range => range[2])
@@ -794,7 +986,7 @@ function createBackupCode() {
   const payload = encodeBase64Url(JSON.stringify(data));
   const checksum = makeChecksum(payload);
 
-  return "QT1|" + payload + "|" + checksum;
+  return "QT2|" + payload + "|" + checksum;
 }
 
 function showBackupCode() {
@@ -833,7 +1025,7 @@ function restoreFromCode() {
   const message = document.getElementById("restoreMessage");
   const parts = code.split("|");
 
-  if (parts.length !== 3 || parts[0] !== "QT1") {
+  if (parts.length !== 3 || (parts[0] !== "QT1" && parts[0] !== "QT2")) {
     message.innerHTML = "Invalid backup code.";
     return;
   }
@@ -849,7 +1041,12 @@ function restoreFromCode() {
   try {
     const data = JSON.parse(decodeBase64Url(payload));
 
-    if (data.v !== 1) {
+    if (parts[0] === "QT1" && data.v !== 1) {
+      message.innerHTML = "Invalid backup code.";
+      return;
+    }
+
+    if (parts[0] === "QT2" && data.v !== 2) {
       message.innerHTML = "Invalid backup code.";
       return;
     }
@@ -875,6 +1072,8 @@ function restoreFromCode() {
     const restoredBestStreak = Number(data.b);
     const restoredAverage = Number(data.a);
     const restoredTheme = getThemeFromCode(data.t);
+    const restoredMode = parts[0] === "QT2" ? getModeFromCode(data.m) : "tiers";
+    const restoredPromptType = parts[0] === "QT2" ? getPromptFromCode(data.q) : "tiers";
 
     if (
       !Number.isInteger(restoredPlayed) ||
@@ -908,14 +1107,19 @@ function restoreFromCode() {
     bestStreak = restoredBestStreak;
     currentAverage = restoredAverage;
     currentCorrect = restoredCorrect;
+    currentPromptType = restoredPromptType;
+    trainingMode = restoredMode;
     tierBag = restoredBag;
     answerLocked = false;
+
+    localStorage.setItem("qtTrainingMode", trainingMode);
 
     document.getElementById("average").innerText = currentAverage.toFixed(2);
     document.getElementById("answer").value = "";
     document.getElementById("result").innerHTML = "Restored.";
 
     updateStats();
+    updateModeDisplay();
     saveStats();
     saveQuestionState();
     setTheme(restoredTheme, false);
@@ -941,6 +1145,8 @@ updateStats();
 if (!loadQuestionState()) {
   newAverage(false);
 }
+
+updateModeDisplay();
 </script>
 </body>
 </html>
