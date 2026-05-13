@@ -372,6 +372,7 @@
       </div>
 
       <div class="generate-area">
+        <button id="weekQualityDisplayButton" onclick="openQualityDisplayPopup()">Quality Display</button>
         <button onclick="generateSummary()">Generate Week Summary</button>
       </div>
     </section>
@@ -400,6 +401,7 @@
       <div id="monthScoreGrid" class="month-score-grid"></div>
 
       <div class="generate-area">
+        <button id="monthQualityDisplayButton" onclick="openQualityDisplayPopup()">Quality Display</button>
         <button onclick="generateSummary()">Generate Month Summary</button>
       </div>
     </section>
@@ -424,6 +426,15 @@
 
   <div id="popupOverlay" onclick="closeAllPopups()"></div>
 
+  <div id="qualityDisplayPopup" class="popup">
+    <div class="popup-title">Quality Display</div>
+    <div class="popup-note">Choose how ARQ labels summary quality.</div>
+    <button onclick="setQualityDisplay('tiers')">Quality Tiers</button>
+    <button onclick="setQualityDisplay('grades')">Letter Grades</button>
+    <button onclick="setQualityDisplay('both')">Quality Tiers + Letter Grades</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
   <div id="resetPopup" class="popup">
     <div id="resetPopupTitle" class="popup-title">Reset?</div>
     <div id="resetPopupNote" class="popup-note"></div>
@@ -433,6 +444,7 @@
 
   <script>
     let currentMode = "week";
+    let qualityDisplay = "tiers";
     let latestSummaryText = "";
     let latestSummaryHtml = "";
 
@@ -464,22 +476,22 @@
     };
 
     const qualities = [
-      [1.00, 1.24, "🟥 Very Poor I"],
-      [1.25, 1.49, "🟥 Very Poor II"],
-      [1.50, 1.74, "🟧 Poor I"],
-      [1.75, 1.99, "🟧 Poor II"],
-      [2.00, 2.24, "🟧 Poor III"],
-      [2.25, 2.49, "🟧 Poor IV"],
-      [2.50, 2.74, "🟨 Mixed I"],
-      [2.75, 2.99, "🟨 Mixed II"],
-      [3.00, 3.24, "🟨 Mixed III"],
-      [3.25, 3.49, "🟨 Mixed IV"],
-      [3.50, 3.74, "🟩 Good I"],
-      [3.75, 3.99, "🟩 Good II"],
-      [4.00, 4.24, "🟩 Good III"],
-      [4.25, 4.49, "🟩 Good IV"],
-      [4.50, 4.74, "🟦 Excellent I"],
-      [4.75, 5.00, "🟦 Excellent II"]
+      [1.00, 1.24, "🟥", "Very Poor I", "F"],
+      [1.25, 1.49, "🟥", "Very Poor II", "F"],
+      [1.50, 1.74, "🟧", "Poor I", "D-"],
+      [1.75, 1.99, "🟧", "Poor II", "D"],
+      [2.00, 2.24, "🟧", "Poor III", "D+"],
+      [2.25, 2.49, "🟧", "Poor IV", "C-"],
+      [2.50, 2.74, "🟨", "Mixed I", "C"],
+      [2.75, 2.99, "🟨", "Mixed II", "C+"],
+      [3.00, 3.24, "🟨", "Mixed III", "B-"],
+      [3.25, 3.49, "🟨", "Mixed IV", "B"],
+      [3.50, 3.74, "🟩", "Good I", "B+"],
+      [3.75, 3.99, "🟩", "Good II", "A-"],
+      [4.00, 4.24, "🟩", "Good III", "A"],
+      [4.25, 4.49, "🟩", "Good IV", "A+"],
+      [4.50, 4.74, "🟦", "Excellent I", "A++"],
+      [4.75, 5.00, "🟦", "Excellent II", "A+++"]
     ];
 
     function truncateToTwoDecimals(number) {
@@ -513,6 +525,52 @@
       saveValue("currentMode", currentMode);
     }
 
+    function normalizeQualityDisplay(display) {
+      if (display === "tiers" || display === "grades" || display === "both") {
+        return display;
+      }
+
+      return "tiers";
+    }
+
+    function saveQualityDisplay() {
+      saveValue("qualityDisplay", qualityDisplay);
+    }
+
+    function getQualityDisplayLabel(display) {
+      display = normalizeQualityDisplay(display);
+
+      if (display === "grades") {
+        return "Letter Grades";
+      }
+
+      if (display === "both") {
+        return "Quality Tiers + Letter Grades";
+      }
+
+      return "Quality Tiers";
+    }
+
+    function updateQualityDisplayButtons() {
+      const label = "Quality Display: " + getQualityDisplayLabel(qualityDisplay);
+
+      document.getElementById("weekQualityDisplayButton").textContent = label;
+      document.getElementById("monthQualityDisplayButton").textContent = label;
+    }
+
+    function openQualityDisplayPopup() {
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("qualityDisplayPopup").style.display = "block";
+    }
+
+    function setQualityDisplay(display) {
+      qualityDisplay = normalizeQualityDisplay(display);
+      saveQualityDisplay();
+      updateQualityDisplayButtons();
+      showCurrentSavedSummary();
+      closeAllPopups();
+    }
+
     function saveSelectedMonth() {
       saveValue("selectedMonth", document.getElementById("monthSelect").value);
     }
@@ -543,6 +601,7 @@
       }
 
       document.getElementById("monthSelect").value = loadValue("selectedMonth", "");
+      qualityDisplay = normalizeQualityDisplay(loadValue("qualityDisplay", "tiers"));
     }
 
     function getWeekLabel() {
@@ -573,18 +632,39 @@
       return getMonthLabel();
     }
 
-    function getQuality(average) {
+    function getQualityData(average) {
       for (const quality of qualities) {
         const min = quality[0];
         const max = quality[1];
-        const label = quality[2];
 
         if (average >= min && average <= max) {
-          return label;
+          return {
+            emoji: quality[2],
+            tier: quality[3],
+            grade: quality[4]
+          };
         }
       }
 
-      return "—";
+      return null;
+    }
+
+    function getQuality(average) {
+      const quality = getQualityData(average);
+
+      if (quality === null) {
+        return "—";
+      }
+
+      if (qualityDisplay === "grades") {
+        return quality.emoji + " " + quality.grade;
+      }
+
+      if (qualityDisplay === "both") {
+        return quality.emoji + " " + quality.tier + " / " + quality.grade;
+      }
+
+      return quality.emoji + " " + quality.tier;
     }
 
     function getScoresFromInputs(inputs) {
@@ -663,9 +743,6 @@
       saveValue(mode + "Summary.label", summary.label);
       saveValue(mode + "Summary.average", summary.average);
       saveValue(mode + "Summary.rating", summary.rating);
-      saveValue(mode + "Summary.quality", summary.quality);
-      saveValue(mode + "Summary.text", getSummaryPlainText(summary));
-      saveValue(mode + "Summary.html", getSummaryClipboardHtml(summary));
     }
 
     function getSavedSummary(mode) {
@@ -675,14 +752,21 @@
         return null;
       }
 
-      return {
+      const average = loadValue(mode + "Summary.average", "");
+      const rating = loadValue(mode + "Summary.rating", "");
+      const quality = getQuality(Number(average));
+
+      const summary = {
         label: label,
-        average: loadValue(mode + "Summary.average", ""),
-        rating: loadValue(mode + "Summary.rating", ""),
-        quality: loadValue(mode + "Summary.quality", ""),
-        text: loadValue(mode + "Summary.text", ""),
-        html: loadValue(mode + "Summary.html", "")
+        average: average,
+        rating: rating,
+        quality: quality
       };
+
+      summary.text = getSummaryPlainText(summary);
+      summary.html = getSummaryClipboardHtml(summary);
+
+      return summary;
     }
 
     function clearSavedWeekSummary() {
@@ -975,6 +1059,7 @@
 
     function closeAllPopups() {
       document.getElementById("popupOverlay").style.display = "none";
+      document.getElementById("qualityDisplayPopup").style.display = "none";
       document.getElementById("resetPopup").style.display = "none";
     }
 
@@ -1049,6 +1134,7 @@
 
     restoreSavedInputs();
     restoreWeeklyPlaceholders();
+    updateQualityDisplayButtons();
 
     const restoredMonth = document.getElementById("monthSelect").value;
     if (restoredMonth !== "") {
