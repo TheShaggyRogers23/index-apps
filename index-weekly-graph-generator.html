@@ -273,7 +273,7 @@
   <div id="resetPopup" class="popup">
     <div class="popup-title">Reset?</div>
     <div class="popup-note">
-      This will clear the title/year, graph selection, weekly values, and generated graph.
+      This will clear the title/year, graph selection, weekly values, saved values, and generated graph.
     </div>
     <button onclick="confirmReset()">Reset</button>
     <button onclick="closeAllPopups()">Cancel</button>
@@ -319,6 +319,12 @@
       "4": [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 1]
     };
 
+    const storageKeys = {
+      title: "wgTitle",
+      selectedGraph: "wgSelectedGraph",
+      weeklyValues: "wgWeeklyValues"
+    };
+
     const bands = [
       { label: "Very Poor", min: 1, max: 1.5, color: "#b94a48" },
       { label: "Poor", min: 1.5, max: 2.5, color: "#c97a2b" },
@@ -340,6 +346,66 @@
 
     function getSelectedWeeks() {
       return graphWeeks[getSelectedGraphNumber()];
+    }
+
+    function getSavedWeeklyValues() {
+      const savedValues = localStorage.getItem(storageKeys.weeklyValues);
+
+      if (savedValues === null) {
+        return {};
+      }
+
+      try {
+        return JSON.parse(savedValues);
+      } catch (error) {
+        localStorage.removeItem(storageKeys.weeklyValues);
+        return {};
+      }
+    }
+
+    function saveCurrentInputs() {
+      const selectedGraph = getSelectedGraphNumber();
+      const weeklyValues = getSavedWeeklyValues();
+
+      if (!weeklyValues[selectedGraph]) {
+        weeklyValues[selectedGraph] = {};
+      }
+
+      const inputs = document.querySelectorAll(".week-input");
+
+      for (const input of inputs) {
+        weeklyValues[selectedGraph][input.dataset.week] = input.value;
+      }
+
+      localStorage.setItem(storageKeys.title, document.getElementById("titleInput").value);
+      localStorage.setItem(storageKeys.selectedGraph, selectedGraph);
+      localStorage.setItem(storageKeys.weeklyValues, JSON.stringify(weeklyValues));
+    }
+
+    function loadSavedSetup() {
+      const savedTitle = localStorage.getItem(storageKeys.title);
+      const savedSelectedGraph = localStorage.getItem(storageKeys.selectedGraph);
+
+      if (savedTitle !== null) {
+        document.getElementById("titleInput").value = savedTitle;
+      }
+
+      if (savedSelectedGraph !== null && graphWeeks[savedSelectedGraph]) {
+        document.getElementById("graphSelect").value = savedSelectedGraph;
+      }
+
+      currentWeeks = getSelectedWeeks();
+
+      const weeklyValues = getSavedWeeklyValues();
+      const selectedGraph = getSelectedGraphNumber();
+      const existingValues = weeklyValues[selectedGraph] || {};
+
+      buildWeekInputs(existingValues);
+    }
+
+    function attachInputSaving() {
+      document.getElementById("titleInput").addEventListener("input", saveCurrentInputs);
+      document.getElementById("weekGrid").addEventListener("input", saveCurrentInputs);
     }
 
     function measureMaxBandLabelWidth() {
@@ -787,11 +853,20 @@
     }
 
     function handleGraphChange() {
+      saveCurrentInputs();
+
       hideMessage();
       graphGenerated = false;
       clearCanvas();
+
       currentWeeks = getSelectedWeeks();
-      buildWeekInputs({});
+
+      const weeklyValues = getSavedWeeklyValues();
+      const selectedGraph = getSelectedGraphNumber();
+      const existingValues = weeklyValues[selectedGraph] || {};
+
+      buildWeekInputs(existingValues);
+      saveCurrentInputs();
     }
 
     function buildWeekInputs(existingValues = {}) {
@@ -858,6 +933,10 @@
       document.getElementById("titleInput").value = "";
       document.getElementById("graphSelect").value = "1";
 
+      localStorage.removeItem(storageKeys.title);
+      localStorage.removeItem(storageKeys.selectedGraph);
+      localStorage.removeItem(storageKeys.weeklyValues);
+
       currentWeeks = graphWeeks["1"];
       buildWeekInputs({});
 
@@ -867,8 +946,8 @@
       closeAllPopups();
     }
 
-    currentWeeks = getSelectedWeeks();
-    buildWeekInputs({});
+    loadSavedSetup();
+    attachInputSaving();
     updatePlotLayout();
     clearCanvas();
   </script>
