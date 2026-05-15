@@ -293,7 +293,7 @@
   <div id="resetPopup" class="popup">
     <div class="popup-title">Reset?</div>
     <div class="popup-note">
-      This will clear the year, monthly values, and generated graph.
+      This will clear the year, monthly values, saved values, and generated graph.
     </div>
     <button onclick="confirmReset()">Reset</button>
     <button onclick="closeAllPopups()">Cancel</button>
@@ -342,6 +342,11 @@
       "julInput", "augInput", "sepInput", "octInput", "novInput", "decInput"
     ];
 
+    const storageKeys = {
+      year: "mgYear",
+      monthlyValues: "mgMonthlyValues"
+    };
+
     const bands = [
       { label: "Very Poor", min: 1, max: 1.5, color: "#b94a48" },
       { label: "Poor", min: 1.5, max: 2.5, color: "#c97a2b" },
@@ -354,6 +359,48 @@
 
     function getFont(size) {
       return size + "px 'DejaVu Sans', Arial, sans-serif";
+    }
+
+    function saveInputs() {
+      const monthlyValues = {};
+
+      for (const id of inputIds) {
+        monthlyValues[id] = document.getElementById(id).value;
+      }
+
+      localStorage.setItem(storageKeys.year, document.getElementById("yearInput").value);
+      localStorage.setItem(storageKeys.monthlyValues, JSON.stringify(monthlyValues));
+    }
+
+    function loadInputs() {
+      const savedYear = localStorage.getItem(storageKeys.year);
+      const savedMonthlyValues = localStorage.getItem(storageKeys.monthlyValues);
+
+      if (savedYear !== null) {
+        document.getElementById("yearInput").value = savedYear;
+      }
+
+      if (savedMonthlyValues !== null) {
+        try {
+          const monthlyValues = JSON.parse(savedMonthlyValues);
+
+          for (const id of inputIds) {
+            if (monthlyValues[id] !== undefined) {
+              document.getElementById(id).value = monthlyValues[id];
+            }
+          }
+        } catch (error) {
+          localStorage.removeItem(storageKeys.monthlyValues);
+        }
+      }
+    }
+
+    function attachInputSaving() {
+      document.getElementById("yearInput").addEventListener("input", saveInputs);
+
+      for (const id of inputIds) {
+        document.getElementById(id).addEventListener("input", saveInputs);
+      }
     }
 
     function measureMaxBandLabelWidth() {
@@ -805,6 +852,9 @@
         document.getElementById(id).value = "";
       }
 
+      localStorage.removeItem(storageKeys.year);
+      localStorage.removeItem(storageKeys.monthlyValues);
+
       clearCanvas();
       graphGenerated = false;
       hideMessage();
@@ -812,6 +862,8 @@
     }
 
     updatePlotLayout();
+    loadInputs();
+    attachInputSaving();
     clearCanvas();
   </script>
 </body>
