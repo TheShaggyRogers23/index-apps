@@ -149,6 +149,17 @@
       margin: 0 0 30px 0;
     }
 
+    .summary-action-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .summary-action-row button {
+      min-width: 132px;
+    }
+
     #results {
       max-width: 460px;
       margin: 0 auto 24px auto;
@@ -251,6 +262,17 @@
       font-size: 19px;
       margin-bottom: 18px;
       line-height: 1.35;
+    }
+
+    .popup-field {
+      margin: 0 0 14px 0;
+      text-align: left;
+    }
+
+    .popup-field label {
+      display: block;
+      font-size: 18px;
+      margin: 0 0 6px 0;
     }
 
     .hidden {
@@ -372,8 +394,12 @@
       </div>
 
       <div class="generate-area">
-        <button id="weekQualityDisplayButton" onclick="openQualityDisplayPopup()">Display: Tiers</button>
-        <button onclick="generateSummary()">Generate Week Summary</button>
+        <button id="weekQualityDisplayButton" onclick="openQualityDisplayPopup()">Display</button>
+
+        <div class="summary-action-row">
+          <button onclick="generateSummary()">Generate</button>
+          <button onclick="openCustomPopup()">Custom</button>
+        </div>
       </div>
     </section>
 
@@ -401,8 +427,12 @@
       <div id="monthScoreGrid" class="month-score-grid"></div>
 
       <div class="generate-area">
-        <button id="monthQualityDisplayButton" onclick="openQualityDisplayPopup()">Display: Tiers</button>
-        <button onclick="generateSummary()">Generate Month Summary</button>
+        <button id="monthQualityDisplayButton" onclick="openQualityDisplayPopup()">Display</button>
+
+        <div class="summary-action-row">
+          <button onclick="generateSummary()">Generate</button>
+          <button onclick="openCustomPopup()">Custom</button>
+        </div>
       </div>
     </section>
 
@@ -413,8 +443,7 @@
     </div>
 
     <div class="copy-area">
-      <button id="copyWeekButton" onclick="copySummary()">Copy Week Summary</button>
-      <button id="copyMonthButton" class="hidden" onclick="copySummary()">Copy Month Summary</button>
+      <button onclick="copySummary()">Copy</button>
     </div>
 
     <div id="copyMessage" class="status-message"></div>
@@ -432,6 +461,24 @@
     <button onclick="setQualityDisplay('tiers')">Quality Tiers</button>
     <button onclick="setQualityDisplay('grades')">Letter Grades</button>
     <button onclick="setQualityDisplay('both')">Quality Tiers + Letter Grades</button>
+    <button onclick="closeAllPopups()">Cancel</button>
+  </div>
+
+  <div id="customPopup" class="popup">
+    <div class="popup-title">Custom Summary</div>
+    <div class="popup-note">Enter an average or rating. If both are filled, average is used.</div>
+
+    <div class="popup-field">
+      <label for="customAverage">Average</label>
+      <input id="customAverage" type="number" min="1" max="5" step="0.01" placeholder="1.00–5.00" data-placeholder="1.00–5.00">
+    </div>
+
+    <div class="popup-field">
+      <label for="customRating">Rating</label>
+      <input id="customRating" type="number" min="0" max="100" step="0.01" placeholder="0.00–100.00" data-placeholder="0.00–100.00">
+    </div>
+
+    <button onclick="generateCustomSummary()">Generate</button>
     <button onclick="closeAllPopups()">Cancel</button>
   </div>
 
@@ -490,8 +537,8 @@
       [3.75, 3.99, "🟩", "Good II", "A-"],
       [4.00, 4.24, "🟩", "Good III", "A"],
       [4.25, 4.49, "🟩", "Good IV", "A+"],
-      [4.50, 4.74, "🟦", "Excellent I", "A++"],
-      [4.75, 5.00, "🟦", "Excellent II", "A+++"]
+      [4.50, 4.74, "🟦", "Excellent I", "S"],
+      [4.75, 5.00, "🟦", "Excellent II", "S+"]
     ];
 
     function truncateToTwoDecimals(number) {
@@ -569,6 +616,18 @@
       updateQualityDisplayButtons();
       showCurrentSavedSummary();
       closeAllPopups();
+    }
+
+    function openCustomPopup() {
+      clearCopyMessage();
+
+      document.getElementById("customAverage").value = "";
+      document.getElementById("customRating").value = "";
+      restorePlaceholder(document.getElementById("customAverage"));
+      restorePlaceholder(document.getElementById("customRating"));
+
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("customPopup").style.display = "block";
     }
 
     function saveSelectedMonth() {
@@ -739,6 +798,32 @@
       );
     }
 
+    function buildSummary(label, average) {
+      average = truncateToTwoDecimals(average);
+
+      const rating = ((average - 1) / 4) * 100;
+      const quality = getQuality(average);
+
+      const summary = {
+        label: label,
+        average: formatTwoDecimals(average),
+        rating: formatTwoDecimals(rating) + "%",
+        quality: quality
+      };
+
+      summary.text = getSummaryPlainText(summary);
+      summary.html = getSummaryClipboardHtml(summary);
+
+      return summary;
+    }
+
+    function displayAndSaveSummary(summary) {
+      document.getElementById("results").innerHTML = getSummaryPreviewHtml(summary);
+      latestSummaryText = summary.text;
+      latestSummaryHtml = summary.html;
+      saveSummary(currentMode, summary);
+    }
+
     function saveSummary(mode, summary) {
       saveValue(mode + "Summary.label", summary.label);
       saveValue(mode + "Summary.average", summary.average);
@@ -773,9 +858,6 @@
       removeSavedValue("weekSummary.label");
       removeSavedValue("weekSummary.average");
       removeSavedValue("weekSummary.rating");
-      removeSavedValue("weekSummary.quality");
-      removeSavedValue("weekSummary.text");
-      removeSavedValue("weekSummary.html");
       clearCopyMessage();
     }
 
@@ -783,9 +865,6 @@
       removeSavedValue("monthSummary.label");
       removeSavedValue("monthSummary.average");
       removeSavedValue("monthSummary.rating");
-      removeSavedValue("monthSummary.quality");
-      removeSavedValue("monthSummary.text");
-      removeSavedValue("monthSummary.html");
       clearCopyMessage();
     }
 
@@ -860,21 +939,51 @@
 
       const sum = scores.reduce((total, score) => total + score, 0);
       const rawAverage = sum / scores.length;
-      const average = truncateToTwoDecimals(rawAverage);
-      const rating = ((average - 1) / 4) * 100;
-      const quality = getQuality(average);
+      const summary = buildSummary(label, rawAverage);
 
-      const summary = {
-        label: label,
-        average: formatTwoDecimals(average),
-        rating: formatTwoDecimals(rating) + "%",
-        quality: quality
-      };
+      displayAndSaveSummary(summary);
+    }
 
-      results.innerHTML = getSummaryPreviewHtml(summary);
-      latestSummaryText = getSummaryPlainText(summary);
-      latestSummaryHtml = getSummaryClipboardHtml(summary);
-      saveSummary(currentMode, summary);
+    function generateCustomSummary() {
+      clearCopyMessage();
+
+      const results = document.getElementById("results");
+      const rawAverage = document.getElementById("customAverage").value.trim();
+      const rawRating = document.getElementById("customRating").value.trim();
+      const label = getCurrentLabel() || (currentMode === "week" ? "Week" : "Month");
+
+      if (rawAverage === "" && rawRating === "") {
+        results.innerHTML = '<div class="error">Enter an average or rating.</div>';
+        closeAllPopups();
+        return;
+      }
+
+      let average;
+
+      if (rawAverage !== "") {
+        average = Number(rawAverage);
+
+        if (Number.isNaN(average) || average < 1 || average > 5) {
+          results.innerHTML = '<div class="error">Custom average must be from 1.00 to 5.00.</div>';
+          closeAllPopups();
+          return;
+        }
+      } else {
+        const rating = Number(rawRating);
+
+        if (Number.isNaN(rating) || rating < 0 || rating > 100) {
+          results.innerHTML = '<div class="error">Custom rating must be from 0.00% to 100.00%.</div>';
+          closeAllPopups();
+          return;
+        }
+
+        average = (rating / 100) * 4 + 1;
+      }
+
+      const summary = buildSummary(label, average);
+
+      displayAndSaveSummary(summary);
+      closeAllPopups();
     }
 
     async function copySummary() {
@@ -932,23 +1041,17 @@
       const monthPanel = document.getElementById("monthPanel");
       const weekModeButton = document.getElementById("weekModeButton");
       const monthModeButton = document.getElementById("monthModeButton");
-      const copyWeekButton = document.getElementById("copyWeekButton");
-      const copyMonthButton = document.getElementById("copyMonthButton");
 
       if (mode === "week") {
         weekPanel.classList.remove("hidden");
         monthPanel.classList.add("hidden");
         weekModeButton.classList.add("active-mode");
         monthModeButton.classList.remove("active-mode");
-        copyWeekButton.classList.remove("hidden");
-        copyMonthButton.classList.add("hidden");
       } else {
         weekPanel.classList.add("hidden");
         monthPanel.classList.remove("hidden");
         weekModeButton.classList.remove("active-mode");
         monthModeButton.classList.add("active-mode");
-        copyWeekButton.classList.add("hidden");
-        copyMonthButton.classList.remove("hidden");
       }
 
       showCurrentSavedSummary();
@@ -1060,6 +1163,7 @@
     function closeAllPopups() {
       document.getElementById("popupOverlay").style.display = "none";
       document.getElementById("qualityDisplayPopup").style.display = "none";
+      document.getElementById("customPopup").style.display = "none";
       document.getElementById("resetPopup").style.display = "none";
     }
 
@@ -1121,6 +1225,8 @@
 
     document.getElementById("weekNumber").addEventListener("input", saveWeekNumber);
     addPlaceholderFocusBehavior(document.getElementById("weekNumber"));
+    addPlaceholderFocusBehavior(document.getElementById("customAverage"));
+    addPlaceholderFocusBehavior(document.getElementById("customRating"));
 
     for (const id of weekInputIds) {
       const input = document.getElementById(id);
